@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "evenhub-skills",
+  "plugins": [
+    {
+      "name": "evenhub-skills",
+      "source": "./",
+      "category": "development",
+      "description": "AI skills for building Even Realities G2 smart glasses apps"
+    }
+  ],
+  "version": "1.0.0"
+}

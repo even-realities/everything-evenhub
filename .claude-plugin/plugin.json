@@ -1,0 +1,6 @@
+{
+  "name": "evenhub-skills",
+  "version": "1.0.0",
+  "description": "AI development skills for Even Realities G2 smart glasses apps",
+  "skills": "./skills/"
+}

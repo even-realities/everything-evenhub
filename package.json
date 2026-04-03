@@ -1,0 +1,11 @@
+{
+  "name": "@evenrealities/evenhub-skills",
+  "version": "1.0.0",
+  "description": "Claude Code skills for Even Realities G2 smart glasses app development",
+  "keywords": ["even-realities", "g2", "smart-glasses", "claude-code", "skills"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/niceven/evenhub-skills"
+  }
+}
