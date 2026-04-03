@@ -27,10 +27,10 @@ npm install -g @evenrealities/evenhub-skills
 | Tier | Skill | Description |
 |------|-------|-------------|
 | Tier 1 — One-Click | `quickstart` | Scaffold a new G2 app from scratch |
-| Tier 1 — One-Click | `build-and-deploy` | Build and sideload to connected glasses |
-| Tier 2 — Core Development | `glasses-ui` | Compose layouts using Even Hub UI containers |
-| Tier 2 — Core Development | `handle-input` | Wire up head gestures and voice commands |
-| Tier 2 — Core Development | `device-features` | Access IMU, audio, and display brightness |
+| Tier 1 — One-Click | `build-and-deploy` | Package and publish app to Even Hub |
+| Tier 2 — Core Development | `glasses-ui` | Build glasses display UI with containers, text, images, and lists |
+| Tier 2 — Core Development | `handle-input` | Handle touchpad gestures, ring input, and lifecycle events |
+| Tier 2 — Core Development | `device-features` | Use audio capture, IMU, device info, and local storage |
 | Tier 2 — Core Development | `test-with-simulator` | Run and debug your app in the Even Hub Simulator |
 | Tier 3 — Reference | `sdk-reference` | Look up Even Hub SDK APIs and types |
 | Tier 3 — Reference | `cli-reference` | Look up Even Hub CLI commands |
