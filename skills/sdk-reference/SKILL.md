@@ -120,7 +120,7 @@ interface ListContainerProperty {
   width: number            // 0–576
   height: number           // 0–288
   borderWidth: number      // 0–5
-  borderColor: number      // 0–16
+  borderColor: number      // 0–15
   borderRadius: number     // 0–10
   paddingLength: number    // 0–32
   containerID: number
