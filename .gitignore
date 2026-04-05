@@ -1,0 +1,3 @@
+node_modules/
+harness/.output/*
+!harness/.output/.gitkeep

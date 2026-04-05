@@ -36,6 +36,16 @@ npm install -g @evenrealities/evenhub-skills
 | Tier 3 — Reference | `cli-reference` | Look up Even Hub CLI commands |
 | Tier 3 — Reference | `design-guidelines` | G2 display design constraints and best practices |
 
+## Harness Testing
+
+Each skill includes a harness test to verify it produces correct output when used by an AI agent. Run a test with:
+
+```
+/harness quickstart
+```
+
+See [`harness/README.md`](harness/README.md) for details on adding tests for new skills.
+
 ## Resources
 
 - [Even Hub Docs](https://hub.evenrealities.com/docs/getting-started/overview)
