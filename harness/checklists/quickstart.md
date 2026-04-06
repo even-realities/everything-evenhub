@@ -49,9 +49,16 @@ Read actual files on disk. Do NOT trust the implementer's report.
 - [ ] Vite boilerplate files removed (no `counter.ts`, `style.css`, or `assets/` in src/)
 - [ ] Next steps were communicated (dev server, simulator, QR)
 
+## 6. End-to-End Build Verification (2 items)
+
+Run these commands inside the generated project directory:
+
+- [ ] `npx tsc --noEmit` passes with 0 TypeScript errors
+- [ ] `npm run build` succeeds (Vite produces dist/ output)
+
 ## Scoring
 
-- **Total items:** 32
-- **Pass threshold:** 32/32 (all must pass)
+- **Total items:** 34
+- **Pass threshold:** 34/34 (all must pass)
 - For each FAIL: explain what's wrong and whether it's an agent error or a skill guidance gap
 - **Skill improvement suggestions:** list any changes to the SKILL.md that would prevent the failure
