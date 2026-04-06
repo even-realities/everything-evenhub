@@ -275,12 +275,9 @@ let currentPage = 0
 
 async function showPage(index: number) {
   currentPage = index
-  await bridge.rebuildPageContainer(0, {
+  await bridge.rebuildPageContainer({
     containerTotalNum: 1,
-    textObject: [new TextContainerProperty({
-      ...containerConfig,
-      content: pages[index],
-    })],
+    textObject: [{ ...containerConfig, content: pages[index] }],
   })
 }
 ```
@@ -290,25 +287,25 @@ async function showPage(index: number) {
 ```typescript
 import {
   waitForEvenAppBridge,
-  TextContainerProperty,
-  ImageContainerProperty,
+  type TextContainerProperty,
+  type ImageContainerProperty,
 } from '@evenrealities/even_hub_sdk'
 
 const bridge = await waitForEvenAppBridge()
 
 // Create initial page with text and image containers
-const textContainer = new TextContainerProperty({
+const textContainer: TextContainerProperty = {
   xPosition: 0, yPosition: 0, width: 576, height: 200,
   borderWidth: 0, borderColor: 5, paddingLength: 4,
   containerID: 1, containerName: 'main',
   content: 'Hello from G2!',
   isEventCapture: 1,
-})
+}
 
-const imageContainer = new ImageContainerProperty({
+const imageContainer: ImageContainerProperty = {
   xPosition: 200, yPosition: 210, width: 100, height: 60,
   containerID: 2, containerName: 'icon',
-})
+}
 
 const result = await bridge.createStartUpPageContainer({
   containerTotalNum: 2,
@@ -325,7 +322,13 @@ if (result === 0) {
   })
 
   // Flicker-free text update
-  await bridge.textContainerUpgrade(1, 'main', 'Updated text!', 0, 0)
+  await bridge.textContainerUpgrade({
+    containerID: 1,
+    containerName: 'main',
+    content: 'Updated text!',
+    contentOffset: 0,
+    contentLength: 0,
+  })
 }
 ```
 
@@ -335,20 +338,20 @@ When building an image-first app (e.g., rendering a canvas or bitmap as the prim
 
 ```typescript
 // Full-screen transparent text container — receives events, invisible to user
-const eventLayer = new TextContainerProperty({
+const eventLayer: TextContainerProperty = {
   xPosition: 0, yPosition: 0, width: 576, height: 288,
   containerID: 1, containerName: 'eventLayer',
   content: ' ',        // single space — required, cannot be empty
   isEventCapture: 1,   // this layer catches all input events
   borderWidth: 0, borderColor: 0, paddingLength: 0,
-})
+}
 
 // Image container renders on top of the event layer
-const imageLayer = new ImageContainerProperty({
+const imageLayer: ImageContainerProperty = {
   xPosition: 0, yPosition: 0, width: 200, height: 100,
   containerID: 2, containerName: 'display',
   // isEventCapture: 0 (default) — image containers do not capture events
-})
+}
 
 await bridge.createStartUpPageContainer({
   containerTotalNum: 2,

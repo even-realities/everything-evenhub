@@ -70,11 +70,11 @@ This writes `app.json` to the project root. If the command is interactive, fill 
 Overwrite `src/main.ts` with exactly the following content. Then delete any unused boilerplate files left by the Vite template (e.g., `src/counter.ts`, `src/style.css`, `src/assets/`).
 
 ```typescript
-import { waitForEvenAppBridge, TextContainerProperty } from '@evenrealities/even_hub_sdk'
+import { waitForEvenAppBridge, type TextContainerProperty } from '@evenrealities/even_hub_sdk'
 
 const bridge = await waitForEvenAppBridge()
 
-const mainText = new TextContainerProperty({
+const mainText: TextContainerProperty = {
   xPosition: 0,
   yPosition: 0,
   width: 576,
@@ -86,9 +86,12 @@ const mainText = new TextContainerProperty({
   containerName: 'main',
   content: 'Hello from G2!',
   isEventCapture: 1,
-})
+}
 
-const result = await bridge.createStartUpPageContainer(1, [mainText])
+const result = await bridge.createStartUpPageContainer({
+  containerTotalNum: 1,
+  textObject: [mainText],
+})
 console.log('Page created:', result === 0 ? 'success' : 'failed')
 ```
 
