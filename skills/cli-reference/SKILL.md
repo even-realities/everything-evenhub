@@ -16,9 +16,14 @@ npm install -D @evenrealities/evenhub-cli
 
 # Install globally
 npm install -g @evenrealities/evenhub-cli
+
+# Or run without installing via npx
+npx @evenrealities/evenhub-cli <command>
 ```
 
 Current version: **v0.1.10**
+
+When installed as a dev dependency, use `npx evenhub <command>` to run. When installed globally, use `evenhub <command>` directly.
 
 ---
 

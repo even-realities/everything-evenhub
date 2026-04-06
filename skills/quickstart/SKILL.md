@@ -25,6 +25,8 @@ Creates a fully working Even Hub project directory containing:
 
 Extract the project name from `$ARGUMENTS`. Strip spaces and special characters to produce a valid directory name (e.g. `"My Cool App"` → `my-cool-app`). If no argument is provided, use `my-evenhub-app`.
 
+Also derive a `package_id` slug by removing hyphens from the directory name (e.g. `my-cool-app` → `mycoolapp`). The `package_id` in `app.json` must be lowercase with no hyphens (e.g. `com.example.mycoolapp`).
+
 ### 2. Create the project with Vite
 
 Run the following command (substitute `<name>` with the project name):
@@ -130,7 +132,7 @@ If `npx evenhub init` does not produce the file automatically, create `app.json`
 ```
 
 Field explanations:
-- `package_id` — Reverse-domain unique identifier for your app (e.g. `com.acme.myapp`).
+- `package_id` — Reverse-domain unique identifier for your app (e.g. `com.acme.myapp`). **No hyphens allowed** — use only lowercase letters and digits in each segment.
 - `edition` — Even Hub platform edition the app targets; use `"202601"` for current G2 firmware.
 - `name` — Human-readable display name shown in the Even Hub app store / launcher.
 - `version` — Semantic version of your app (`MAJOR.MINOR.PATCH`).

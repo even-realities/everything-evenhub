@@ -122,6 +122,23 @@ Persist data to the Even Realities App (survives app restarts):
 
 ---
 
+## Cleanup on Exit
+
+Always stop hardware features and unsubscribe event listeners when the app exits or is destroyed. Failing to do so may leave the microphone or IMU running on the glasses hardware.
+
+```typescript
+// Store all unsubscribe functions and stop hardware on exit
+window.addEventListener('beforeunload', () => {
+  bridge.audioControl(false)
+  bridge.imuControl(false)
+  unsubscribe() // from onEvenHubEvent
+})
+```
+
+Apply the same pattern for any hardware feature that requires explicit stop/start control (`audioControl`, `imuControl`).
+
+---
+
 ## What the SDK Does NOT Expose
 
 The following capabilities are not available through the Even Hub SDK:
