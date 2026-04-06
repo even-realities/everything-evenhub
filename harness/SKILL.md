@@ -6,49 +6,115 @@ allowed-tools: Read, Grep, Glob, Bash, Write, Edit, Agent
 argument-hint: <skill-name> (e.g., quickstart, glasses-ui)
 ---
 
-You are running a harness test for an evenhub-skill. Follow these steps exactly.
+You are running a harness test for an evenhub-skill. Follow these steps exactly. Do not improvise — the value of this harness is reproducibility.
 
-## Steps
-
-### 1. Determine the skill to test
+## Step 1: Determine the skill to test
 
 Extract the skill name from `$ARGUMENTS`. Valid skills: `quickstart`, `build-and-deploy`, `glasses-ui`, `handle-input`, `device-features`, `test-with-simulator`, `sdk-reference`, `cli-reference`, `design-guidelines`.
 
-### 2. Load test case and checklist
+## Step 2: Load all inputs
 
-Read the following files:
-- `harness/cases/<skill-name>.md` — the simulated user request and context
-- `harness/checklists/<skill-name>.md` — the verification checklist
-- `skills/<skill-name>/SKILL.md` — the skill being tested
+Read these 3 files (all paths relative to the evenhub-skills repo root):
 
-If a test case or checklist does not exist for this skill, inform the user and stop.
+1. `skills/<skill-name>/SKILL.md` → store as `SKILL_CONTENT`
+2. `harness/cases/<skill-name>.md` → store as `CASE` (extract the "Simulated User Request" and "Output Directory")
+3. `harness/checklists/<skill-name>.md` → store as `CHECKLIST`
 
-### 3. Dispatch implementer subagent
+If any file is missing, tell the user and stop.
 
-Launch a general-purpose subagent with:
-- The full SKILL.md content as its instructions (do NOT tell it to read the file — paste the content)
-- The simulated user request from the test case
-- Working directory: the project root or `harness/.output/<skill-name>/` as specified in the test case
-- Model: sonnet (mechanical execution)
+## Step 3: Prepare output directory
 
-Wait for the subagent to complete and capture its report.
+- If the case specifies an output directory, create it: `mkdir -p <output-dir>`
+- If the case requires a pre-existing project (e.g., glasses-ui needs the quickstart output), copy it:
+  `cp -r harness/.output/quickstart/demo-glasses/ harness/.output/<skill-name>/demo-glasses/`
+- If no pre-existing project is needed and the skill generates files (quickstart, build-and-deploy), just create the output dir.
+- If the skill is a reference/guidance skill that produces code in an existing project, ensure the project exists.
 
-### 4. Dispatch verifier subagent
+## Step 4: Dispatch implementer subagent
 
-Launch a code-reviewer subagent with:
-- The full checklist from `harness/checklists/<skill-name>.md`
-- The implementer's report for context (but instruct it to read actual files, not trust the report)
-- Output directory path from step 3
+Launch a **general-purpose** subagent with model **sonnet** using EXACTLY this prompt template (substitute the placeholders):
 
-Wait for the verifier to complete.
+```
+You are Claude Code executing a skill. Follow the skill instructions below to fulfill the user request.
 
-### 5. Report results
+## Skill Instructions
 
-Present to the user:
-- Score: X/Y items passed
-- Any FAIL items with details
-- Skill improvement suggestions (issues caused by unclear skill guidance)
-- If improvements are needed, ask the user if you should apply them to the skill
+{SKILL_CONTENT}
+
+## User Request
+
+"{SIMULATED_USER_REQUEST from CASE}"
+
+## Your Job
+
+1. Execute the skill instructions to fulfill the user request
+2. Work from: {OUTPUT_DIRECTORY from CASE}
+3. After completing, if the skill produces code files, run:
+   - `npx tsc --noEmit` (TypeScript check)
+   - `npm run build` (Vite build)
+   If either fails, fix the code and re-run until both pass.
+4. Report back: what you did, files changed, build results, any issues encountered
+```
+
+Wait for the subagent to complete and capture its report as `IMPLEMENTER_REPORT`.
+
+## Step 5: Dispatch verifier subagent
+
+Launch a **superpowers:code-reviewer** subagent using EXACTLY this prompt template:
+
+```
+You are verifying the output of an evenhub-skills harness test.
+
+## What Was Requested
+
+{SIMULATED_USER_REQUEST from CASE}
+
+## What Implementer Claims
+
+{IMPLEMENTER_REPORT}
+
+## CRITICAL: Do Not Trust the Report
+
+Read the ACTUAL files on disk. Verify independently.
+
+## Verification Checklist
+
+{CHECKLIST content}
+
+## Output Location
+
+{OUTPUT_DIRECTORY from CASE}
+
+## Instructions
+
+1. Read every file referenced in the checklist
+2. For code-producing skills, run `npx tsc --noEmit` and `npm run build` yourself
+3. Report PASS or FAIL for each checklist item
+4. For each FAIL: explain what's wrong and whether it's an agent error or a skill guidance gap
+5. At the end provide: Score (X/Y), critical issues, skill improvement suggestions
+```
+
+Wait for the verifier to complete and capture its report as `VERIFIER_REPORT`.
+
+## Step 6: Report results
+
+Present to the user in this format:
+
+```
+## Harness Result: <skill-name>
+
+**Score:** X/Y PASS
+
+### FAIL items (if any)
+| # | Item | Issue | Cause (agent/skill) |
+
+### Skill improvement suggestions (if any)
+| # | Suggestion | Reason |
+
+### Verdict: PASS / NEEDS_FIX
+```
+
+If there are skill improvements needed, ask: "Apply these fixes to the skill?"
 
 ## Task
 
