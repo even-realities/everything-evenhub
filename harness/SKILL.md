@@ -10,7 +10,7 @@ You are running a harness test for an evenhub-skill. Follow these steps exactly.
 
 ## Step 1: Determine the skill to test
 
-Extract the skill name from `$ARGUMENTS`. Valid skills: `quickstart`, `build-and-deploy`, `glasses-ui`, `handle-input`, `device-features`, `test-with-simulator`, `sdk-reference`, `cli-reference`, `design-guidelines`.
+Extract the skill name from `$ARGUMENTS`. Valid skills: `quickstart`, `build-and-deploy`, `glasses-ui`, `handle-input`, `device-features`, `test-with-simulator`, `simulator-automation`, `font-measurement`, `sdk-reference`, `cli-reference`, `design-guidelines`.
 
 ## Step 2: Load all inputs
 
