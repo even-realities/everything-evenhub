@@ -1,8 +1,7 @@
 ---
 name: design-guidelines
 description: UI/UX design guidelines for Even Hub G2 smart glasses — display constraints, layout patterns, icon design, Unicode characters, and community resources. Use when designing glasses app interfaces or planning layouts.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [design question or task]
 ---
 

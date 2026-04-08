@@ -1,13 +1,14 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "evenhub-skills",
+  "owner": {
+    "name": "Even Realities"
+  },
   "plugins": [
     {
       "name": "evenhub-skills",
+      "description": "AI development skills for Even Realities G2 smart glasses apps — scaffolding, UI, input handling, device features, simulator testing, font measurement, and SDK/CLI reference for G2 smart glasses",
       "source": "./",
-      "category": "development",
-      "description": "AI skills for building Even Realities G2 smart glasses apps"
+      "category": "development"
     }
-  ],
-  "version": "1.0.0"
+  ]
 }

@@ -1,8 +1,7 @@
 ---
 name: device-features
 description: Use G2 hardware features in Even Hub apps — microphone audio capture, IMU motion data, device info, user info, and local storage. Use when working with audio, IMU, battery, wearing detection, or persistent storage.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [feature task description]
 ---
 

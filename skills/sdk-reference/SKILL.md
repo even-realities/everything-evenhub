@@ -1,8 +1,7 @@
 ---
 name: sdk-reference
 description: Complete Even Hub SDK API reference — all methods, types, interfaces, enums, and event models for G2 smart glasses development. Use when looking up specific API signatures, parameters, return types, or type definitions.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [API or type to look up]
 ---
 

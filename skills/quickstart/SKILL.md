@@ -1,8 +1,7 @@
 ---
 name: quickstart
 description: Scaffold a new Even Hub G2 smart glasses app from scratch with Vite, TypeScript, SDK, simulator, and CLI. Use when creating a new Even Hub project, starting a glasses app, or bootstrapping development.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [project name or description]
 ---
 

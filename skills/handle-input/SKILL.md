@@ -1,8 +1,7 @@
 ---
 name: handle-input
 description: Handle user input and events in Even Hub G2 apps — touchpad gestures, ring input, scroll, foreground/background lifecycle, and event routing. Use when implementing user interaction or event handling.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [input handling task]
 ---
 

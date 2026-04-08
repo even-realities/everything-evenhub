@@ -1,8 +1,7 @@
 ---
 name: build-and-deploy
 description: Package and deploy an Even Hub G2 app — validate app.json, build, pack into .ehpk, and prepare for submission. Use when packaging, deploying, publishing, or submitting an Even Hub app.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [task description]
 ---
 

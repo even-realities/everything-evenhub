@@ -7,13 +7,13 @@ Claude Code plugin for Even Realities G2 smart glasses app development. Provides
 **Marketplace (recommended)**
 
 ```
-/plugin marketplace add evenhub-skills
+/plugin marketplace add even-realities/evenhub-skills
 ```
 
 **Manual clone**
 
 ```bash
-git clone https://github.com/niceven/evenhub-skills ~/.claude/plugins/evenhub-skills
+git clone https://github.com/even-realities/evenhub-skills ~/.claude/plugins/evenhub-skills
 ```
 
 **npm**

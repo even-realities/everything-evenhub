@@ -1,8 +1,7 @@
 ---
 name: cli-reference
 description: Even Hub CLI command reference — login, init, qr, and pack commands with all options. Use when running CLI commands, generating QR codes, initializing projects, or packaging apps.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [CLI command or task]
 ---
 

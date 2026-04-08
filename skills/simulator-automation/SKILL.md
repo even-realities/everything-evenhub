@@ -4,8 +4,7 @@ description: >-
   Automate the EvenHub glasses simulator via its HTTP API. Use when testing or
   controlling the simulator programmatically — sending glasses input (up, down,
   click, double click), capturing screenshots, or reading browser console logs.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [automation task description]
 ---
 

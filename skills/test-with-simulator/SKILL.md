@@ -1,8 +1,7 @@
 ---
 name: test-with-simulator
 description: Test and debug Even Hub G2 apps using the desktop simulator — launch, configure, debug, take screenshots, and understand simulator vs hardware differences. Use when testing apps without physical glasses.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [testing task description]
 ---
 

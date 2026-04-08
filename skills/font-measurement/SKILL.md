@@ -1,8 +1,7 @@
 ---
 name: font-measurement
 description: Pixel-accurate font measurement for Even Realities G2 glasses — predict text layout dimensions matching the LVGL rendering engine. Use when sizing text or list containers precisely.
-user-invocable: true
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [measurement or layout sizing task]
 ---
 
