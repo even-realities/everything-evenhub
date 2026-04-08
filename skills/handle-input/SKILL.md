@@ -17,13 +17,44 @@ Guide for handling user input, gestures, and lifecycle events in Even Hub G2 app
 | R1 touchpads (ring) | Press, double press, swipe up, swipe down | Optional accessory, same gesture set |
 | IMU (accelerometer/gyroscope) | Head orientation, motion data | See device-features skill |
 
-## Event Types (OsEventTypeList enum)
+## Event Routing Rules
+
+Events route differently depending on the **active container type** (the one with `isEventCapture: 1`). Only one container per page can capture events.
+
+### Text container active
+
+| Gesture | Event field | eventType |
+|---------|-----------|-----------|
+| Swipe up | `event.textEvent` | `1` (SCROLL_TOP_EVENT) |
+| Swipe down | `event.textEvent` | `2` (SCROLL_BOTTOM_EVENT) |
+| Single press | `event.sysEvent` | `undefined` / `0` |
+| Double press | `event.sysEvent` | `3` (DOUBLE_CLICK_EVENT) |
+
+**Key point**: clicks and double-clicks on text containers fire as `sysEvent`, NOT `textEvent`. Only scroll gestures fire as `textEvent`.
+
+### List container active
+
+| Gesture | Event field | Details |
+|---------|-----------|---------|
+| Swipe up/down | (internal) | SDK scrolls the list internally, no event fired |
+| Single press | `event.listEvent` | `.currentSelectItemIndex` = selected item index |
+| Double press | `event.sysEvent` | `.eventType` = `3` |
+
+### System events (always available)
+
+| Gesture | Event field | eventType |
+|---------|-----------|-----------|
+| Foreground enter | `event.sysEvent` | `4` (FOREGROUND_ENTER_EVENT) |
+| Foreground exit | `event.sysEvent` | `5` (FOREGROUND_EXIT_EVENT) |
+| Abnormal exit | `event.sysEvent` | `6` (ABNORMAL_EXIT_EVENT) |
+
+## OsEventTypeList enum values
 
 | Value | Name | Description |
 |-------|------|-------------|
 | 0 | CLICK_EVENT | Single press (G2 or R1) |
-| 1 | SCROLL_TOP_EVENT | Swipe up / scroll reaches top boundary |
-| 2 | SCROLL_BOTTOM_EVENT | Swipe down / scroll reaches bottom boundary |
+| 1 | SCROLL_TOP_EVENT | Swipe up |
+| 2 | SCROLL_BOTTOM_EVENT | Swipe down |
 | 3 | DOUBLE_CLICK_EVENT | Double press (G2 or R1) |
 | 4 | FOREGROUND_ENTER_EVENT | App comes to foreground |
 | 5 | FOREGROUND_EXIT_EVENT | App goes to background |
@@ -31,91 +62,79 @@ Guide for handling user input, gestures, and lifecycle events in Even Hub G2 app
 | — | IMU_DATA_REPORT | IMU data sample |
 | — | SYSTEM_EXIT_EVENT | System exit |
 
-## Event Routing Rules
-
-- Only the container with `isEventCapture: 1` receives events
-- Text container with capture → events arrive as `event.textEvent`
-- List container with capture → events arrive as `event.listEvent`
-- Only one container per page can capture events
-
 ## Event Models
 
 ```typescript
 interface Text_ItemEvent {
   containerID?: number
   containerName?: string
-  eventType?: OsEventTypeList
+  eventType?: number  // 1 = scroll up, 2 = scroll down
 }
 
 interface List_ItemEvent {
   containerID?: number
   containerName?: string
   currentSelectItemName?: string
-  currentSelectItemIndex?: number
-  eventType?: OsEventTypeList
+  currentSelectItemIndex?: number  // 0-based; undefined when 0 (protobuf)
+  eventType?: number
 }
 
 interface Sys_ItemEvent {
-  eventType?: OsEventTypeList
-  eventSource?: EventSourceType  // left/right arm, ring, etc.
+  eventType?: number    // undefined/0 = single click, 3 = double click
+  eventSource?: number  // EventSourceType — left/right arm, ring, etc.
   imuData?: IMU_Report_Data
   systemExitReasonCode?: number
 }
 ```
 
-## G2 vs R1 Distinction
+## Protobuf Zero-Value Omission
 
-G2 (temple touchpads) and R1 (ring touchpads) share the same gesture set — press, double press, swipe up, swipe down. To distinguish between them, check the `eventSource` field in `Sys_ItemEvent`. The `EventSourceType` value indicates whether the input came from the left arm, right arm, or ring accessory.
+The SDK uses protobuf under the hood. **Any field with a zero/default value (0, false, empty string) will be `undefined`**, not the zero value. This affects:
 
-## Lifecycle Events
+- `sysEvent.eventType` — single click is `0`, but arrives as `undefined`
+- `listEvent.currentSelectItemIndex` — first item is `0`, but arrives as `undefined`
+- Any other numeric field with value `0`
 
-| Event | When it fires | Recommended action |
-|-------|--------------|-------------------|
-| FOREGROUND_ENTER_EVENT | App resumed / brought to foreground | Resume updates, refresh data |
-| FOREGROUND_EXIT_EVENT | App backgrounded | Pause timers, stop ongoing work |
-| ABNORMAL_EXIT_EVENT | Bluetooth connection lost unexpectedly | Clean up state, handle reconnection |
+**Always use nullish coalescing**: `event.sysEvent.eventType ?? 0`, `event.listEvent.currentSelectItemIndex ?? 0`.
 
 ## Complete Event Handling Template
 
 ```typescript
-import { waitForEvenAppBridge, OsEventTypeList } from '@evenrealities/even_hub_sdk'
+import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk'
 
 const bridge = await waitForEvenAppBridge()
 
 const unsubscribe = bridge.onEvenHubEvent(event => {
-  const textEvent = event.textEvent
-  if (textEvent) {
-    switch (textEvent.eventType) {
-      case OsEventTypeList.CLICK_EVENT:
-      case undefined: // SDK normalizes 0 to undefined in some cases
-        // Handle press
-        break
-      case OsEventTypeList.DOUBLE_CLICK_EVENT:
-        // Handle double press
-        break
-      case OsEventTypeList.SCROLL_TOP_EVENT:
-        // Handle swipe up
-        break
-      case OsEventTypeList.SCROLL_BOTTOM_EVENT:
-        // Handle swipe down
-        break
-      case OsEventTypeList.FOREGROUND_ENTER_EVENT:
-        // App resumed
-        break
-      case OsEventTypeList.FOREGROUND_EXIT_EVENT:
-        // App backgrounded
-        break
-    }
+  if (event.listEvent) {
+    // List item selected (single press on list container)
+    const idx = event.listEvent.currentSelectItemIndex ?? 0
+    console.log('Selected index:', idx)
+    return
   }
 
-  if (event.listEvent) {
-    console.log('Selected:', event.listEvent.currentSelectItemName)
-    console.log('Index:', event.listEvent.currentSelectItemIndex)
+  if (event.textEvent) {
+    // Scroll on text container (NOT clicks — those come via sysEvent)
+    const type = event.textEvent.eventType ?? 0
+    if (type === 1) {
+      // Swipe up / scroll up
+    } else if (type === 2) {
+      // Swipe down / scroll down
+    }
+    return
   }
 
   if (event.sysEvent) {
-    console.log('Event type:', event.sysEvent.eventType)
-    console.log('Source:', event.sysEvent.eventSource)
+    const type = event.sysEvent.eventType ?? 0
+    if (type === 0) {
+      // Single press (on text container, or system-level)
+    } else if (type === 3) {
+      // Double press
+    } else if (type === 4) {
+      // App resumed (foreground enter)
+    } else if (type === 5) {
+      // App backgrounded (foreground exit)
+    }
+    return
   }
 })
 
@@ -123,11 +142,15 @@ const unsubscribe = bridge.onEvenHubEvent(event => {
 // unsubscribe()
 ```
 
+## G2 vs R1 Distinction
+
+G2 (temple touchpads) and R1 (ring touchpads) share the same gesture set. To distinguish between them, check `eventSource` in `Sys_ItemEvent`. The `EventSourceType` value indicates whether input came from the left arm, right arm, or ring accessory.
+
 ## Important Notes
 
-**CLICK_EVENT normalization**: The SDK may normalize `CLICK_EVENT` (value `0`) to `undefined` in some cases. Always handle both `case OsEventTypeList.CLICK_EVENT:` and `case undefined:` in the same switch branch to ensure single-press events are never missed.
-
-**Cleanup**: The `bridge.onEvenHubEvent()` call returns an `unsubscribe` function. Always call it on component teardown to prevent memory leaks. Failing to unsubscribe can cause stale event handlers to fire after your component is destroyed.
+- **Clicks on text containers route to `sysEvent`**, not `textEvent`. Only scroll gestures fire `textEvent`. This is the most common source of event-handling bugs.
+- **Cleanup**: `bridge.onEvenHubEvent()` returns an unsubscribe function. Always call it on component teardown.
+- **One event listener per page**: Only the container with `isEventCapture: 1` receives input events. If multiple containers have `isEventCapture: 1`, the SDK rejects the page with a validation error.
 
 ## Task
 

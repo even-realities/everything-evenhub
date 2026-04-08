@@ -139,6 +139,64 @@ const result = measureList(
 
 Returns raw advance width of a codepoint in 1/16px units (no kerning, no rounding). Useful for debugging or custom measurement logic.
 
+## Accounting for Padding and Borders
+
+When a `TextContainerProperty` has `paddingLength` or `borderWidth`, the SDK's LVGL renderer subtracts these from the available text area **inside** the container. If you measure text against the full container width/height, the content will overflow and a scrollbar appears.
+
+### How padding and border affect the text area
+
+```
+Container (width × height)
+┌─ border (borderWidth pixels) ─────────────────────┐
+│ ┌─ padding (paddingLength pixels) ──────────────┐ │
+│ │                                                │ │
+│ │   Text renders here                            │ │
+│ │   innerWidth  = width  - 2*padding - 2*border  │ │
+│ │   innerHeight = height - 2*padding - 2*border  │ │
+│ │                                                │ │
+│ └────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────┘
+```
+
+### Rules
+
+- `paddingLength: N` reduces text area by `N` pixels on **all four sides**
+- `borderWidth: N` reduces text area by `N` pixel on **all four sides** (border is drawn inside the container)
+- Both stack: total inset = `paddingLength + borderWidth` per side
+- If neither is set, text renders at the full container width/height
+
+### Measuring text for a container with padding/border
+
+```ts
+import { measureTextWrap } from 'even-pretext';
+
+const containerW = 560;
+const containerH = 258;
+const padding = 8;  // paddingLength
+const border = 1;   // borderWidth
+
+const inset = padding + border;
+const innerW = containerW - 2 * inset;
+const innerH = containerH - 2 * inset;
+const maxLines = Math.floor(innerH / 27);
+
+// Measure and truncate against the INNER dimensions
+const m = measureTextWrap(text, innerW);
+if (m.lineCount > maxLines) {
+  text = truncateToFitLines(text, innerW, maxLines);
+}
+```
+
+### Common mistake
+
+```ts
+// WRONG — measures against container width, ignores padding/border
+const m = measureTextWrap(text, 560);
+
+// RIGHT — subtracts padding and border from both sides
+const m = measureTextWrap(text, 560 - 2 * (padding + border));
+```
+
 ## Common Patterns
 
 ### Size a text container to fit its content
@@ -198,6 +256,7 @@ When using this library to size UI containers for Even Realities glasses:
 3. **List items are 40px tall** — multiply by item count and add `2 * padding` for list container height.
 4. **Max display is 576 x 288.** Ensure containers fit within these bounds.
 5. When pairing with the glasses-ui skill, use `measureTextWrap` / `measureList` results to set container `width` and `height` properties precisely.
+6. **When a container has `paddingLength` or `borderWidth`**, subtract these from the container dimensions before measuring text. Failing to do so causes content overflow and a scrollbar. See "Accounting for Padding and Borders" above.
 
 ## Task
 
