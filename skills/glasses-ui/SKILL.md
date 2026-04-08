@@ -228,6 +228,92 @@ shutDownPageContainer(type: number): Promise<boolean>
 - **Do not call `updateImageRawData` concurrently** — queue updates and await each before sending the next
 - **Pre-paginate long text** at ~400–500 character boundaries and use `rebuildPageContainer` on scroll events
 
+## Render Queue — Prevent Concurrent Bridge Calls
+
+Bridge calls go over BLE to the glasses. Sending multiple calls concurrently crashes the glasses or causes undefined behavior. **Serialize all bridge render calls through a queue.**
+
+Additionally, a single BLE call can hang for ~30 seconds if the connection is flaky. Without a timeout, this blocks the entire render pipeline. Use `Promise.race` to cap each call.
+
+```typescript
+let renderInFlight = false
+let pendingRender: (() => Promise<void>) | null = null
+const RENDER_TIMEOUT_MS = 4000
+
+async function enqueueRender(fn: () => Promise<void>) {
+  if (renderInFlight) {
+    pendingRender = fn  // only keep latest — drop intermediate
+    return
+  }
+  renderInFlight = true
+  try {
+    await Promise.race([
+      fn(),
+      new Promise<void>((_, rej) =>
+        setTimeout(() => rej(new Error('render timeout')), RENDER_TIMEOUT_MS)
+      ),
+    ])
+  } catch {
+    // Timeout or bridge error — drop it, next call will retry
+  } finally {
+    renderInFlight = false
+    if (pendingRender) {
+      const next = pendingRender
+      pendingRender = null
+      await enqueueRender(next)
+    }
+  }
+}
+```
+
+## Startup Page Tracking — Critical
+
+`createStartUpPageContainer` must be called **exactly once**. All subsequent page changes must use `rebuildPageContainer`. Calling `createStartUpPageContainer` repeatedly floods the bridge and crashes the glasses.
+
+**Warning:** Do NOT check the return value to decide whether startup succeeded. The SDK documentation says it returns `0` on success, but in practice it may return the string `'success'`. Gating on `result === 0` silently fails, causing every render to re-call `createStartUpPageContainer`.
+
+```typescript
+let startupRendered = false
+
+async function renderPage(bridge: EvenAppBridge, config: any) {
+  await enqueueRender(async () => {
+    if (!startupRendered) {
+      startupRendered = true  // set BEFORE the call
+      try {
+        await bridge.createStartUpPageContainer(new CreateStartUpPageContainer(config))
+      } catch (err) {
+        startupRendered = false  // allow retry on failure
+        throw err
+      }
+    } else {
+      await bridge.rebuildPageContainer(new RebuildPageContainer(config))
+    }
+  })
+}
+```
+
+## Atomic Multi-Container Updates
+
+When updating multiple text containers (e.g., a reader + status bar), update them in a single enqueued batch. If you enqueue them separately, the render queue drops intermediate pending renders, causing desync.
+
+```typescript
+async function updateTextBatch(
+  bridge: EvenAppBridge,
+  updates: Array<{ containerID: number; containerName: string; content: string }>,
+) {
+  await enqueueRender(async () => {
+    for (const u of updates) {
+      await bridge.textContainerUpgrade(new TextContainerUpgrade({
+        containerID: u.containerID,
+        containerName: u.containerName,
+        contentOffset: 0,
+        contentLength: 2000,
+        content: u.content,
+      }))
+    }
+  })
+}
+```
+
 ## Common UI Patterns
 
 ### Fake buttons

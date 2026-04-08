@@ -119,6 +119,45 @@ Persist data to the Even Realities App (survives app restarts):
 - `await bridge.setLocalStorage(key, value)` — stores a string value; returns `boolean` indicating success
 - `await bridge.getLocalStorage(key)` — retrieves a stored string; returns an empty string if the key does not exist
 
+### SDK localStorage is the ONLY reliable persistence
+
+The Even App WebView is a Flutter WebView. **Browser IndexedDB and browser localStorage do NOT persist across app restarts** in this environment. Data stored there will be lost when the user closes and reopens the app.
+
+Use `bridge.setLocalStorage` / `bridge.getLocalStorage` for ALL user state: settings, progress, bookmarks, preferences, cached data. For large content (e.g., ebook text), chunk it into multiple keys:
+
+```typescript
+const CHUNK_SIZE = 50_000  // chars per key
+const PREFIX = 'myapp.content_'
+
+async function saveContent(bridge: EvenAppBridge, id: string, text: string) {
+  const chunks = Math.ceil(text.length / CHUNK_SIZE)
+  await bridge.setLocalStorage(`${PREFIX}${id}_n`, String(chunks))
+  for (let i = 0; i < chunks; i++) {
+    await bridge.setLocalStorage(`${PREFIX}${id}_${i}`, text.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE))
+  }
+}
+```
+
+### Debounced persistence
+
+Calling `bridge.setLocalStorage` on every state change (e.g., every page turn) spams the bridge. Debounce writes and flush immediately on exit:
+
+```typescript
+let saveTimeout: number | null = null
+
+function saveState() {
+  if (saveTimeout) clearTimeout(saveTimeout)
+  saveTimeout = window.setTimeout(flushState, 500)
+}
+
+async function flushState() {
+  if (saveTimeout) { clearTimeout(saveTimeout); saveTimeout = null }
+  await bridge.setLocalStorage('myapp.state', JSON.stringify(state))
+}
+
+// Call flushState() on FOREGROUND_EXIT, ABNORMAL_EXIT, SYSTEM_EXIT, and before shutDownPageContainer
+```
+
 ---
 
 ## Cleanup on Exit

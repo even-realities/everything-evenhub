@@ -59,8 +59,8 @@ Events route differently depending on the **active container type** (the one wit
 | 4 | FOREGROUND_ENTER_EVENT | App comes to foreground |
 | 5 | FOREGROUND_EXIT_EVENT | App goes to background |
 | 6 | ABNORMAL_EXIT_EVENT | Unexpected disconnect |
-| — | IMU_DATA_REPORT | IMU data sample |
-| — | SYSTEM_EXIT_EVENT | System exit |
+| 7 | SYSTEM_EXIT_EVENT | System-level exit |
+| 8 | IMU_DATA_REPORT | IMU data sample |
 
 ## Event Models
 
@@ -146,11 +146,40 @@ const unsubscribe = bridge.onEvenHubEvent(event => {
 
 G2 (temple touchpads) and R1 (ring touchpads) share the same gesture set. To distinguish between them, check `eventSource` in `Sys_ItemEvent`. The `EventSourceType` value indicates whether input came from the left arm, right arm, or ring accessory.
 
+## Exit Mechanism — Mandatory
+
+Every app MUST provide a way to exit via glasses/ring interaction. Use the system-level exit confirmation — do NOT build custom exit dialogs.
+
+**Recommended pattern — double-tap calls system popup:**
+
+```typescript
+function handleEvent(event: EvenHubEvent) {
+  const type = event.sysEvent?.eventType ?? event.textEvent?.eventType ?? event.listEvent?.eventType
+  const eventType = type ?? 0
+
+  if (eventType === 3) { // DOUBLE_CLICK_EVENT
+    // Save state, disable IMU, clean up
+    flushState()
+    bridge.imuControl(false).catch(() => {})
+    unsubscribe()
+    bridge.shutDownPageContainer(1)  // 1 = system confirmation popup
+    return
+  }
+}
+```
+
+**`shutDownPageContainer` modes:**
+- `shutDownPageContainer(0)` — immediate exit, no confirmation (use sparingly)
+- `shutDownPageContainer(1)` — system-level "Exit?" popup on the glasses (recommended)
+
+The system popup is the canonical pattern — it matches Even's native apps. Do not draw your own confirmation dialog; it adds complexity and the SDK provides this for free.
+
 ## Important Notes
 
 - **Clicks on text containers route to `sysEvent`**, not `textEvent`. Only scroll gestures fire `textEvent`. This is the most common source of event-handling bugs.
-- **Cleanup**: `bridge.onEvenHubEvent()` returns an unsubscribe function. Always call it on component teardown.
+- **Cleanup**: `bridge.onEvenHubEvent()` returns an unsubscribe function. Always call it on component teardown — including on exit events (ABNORMAL_EXIT, SYSTEM_EXIT).
 - **One event listener per page**: Only the container with `isEventCapture: 1` receives input events. If multiple containers have `isEventCapture: 1`, the SDK rejects the page with a validation error.
+- **Handle ALL lifecycle events**: FOREGROUND_ENTER (4) to re-render, FOREGROUND_EXIT (5) to save state, ABNORMAL_EXIT (6) and SYSTEM_EXIT (7) to clean up resources (disable IMU/audio, unsubscribe, flush state).
 
 ## Task
 

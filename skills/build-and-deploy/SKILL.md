@@ -167,6 +167,50 @@ npx evenhub pack <app.json> <build-folder> [options]
 
 ---
 
+## CORS in the WebView — Day-1 Blocker
+
+The Even App WebView is a real browser engine (Chromium on Android, WKWebView on iOS). **Full CORS enforcement applies.** The `app.json` network whitelist is an Even-level permission layer — it does NOT bypass CORS. You need BOTH:
+
+1. Domain whitelisted in `app.json` `permissions.network.whitelist`
+2. The remote server returning `Access-Control-Allow-Origin` headers
+
+If the API you're calling doesn't send CORS headers, your `fetch()` will fail with a network error — even though the domain is whitelisted.
+
+### Solutions
+
+| Scenario | Fix |
+|----------|-----|
+| API returns `Access-Control-Allow-Origin: *` | Just `fetch()` directly. It works. |
+| API has no CORS headers | Use a Cloudflare Worker proxy (free tier), your own backend, or find a CORS-enabled mirror |
+| You control the API | Add `Access-Control-Allow-Origin: *` to your server responses |
+
+### During development (Vite dev server)
+
+Use a Vite proxy to avoid CORS during local development:
+
+```typescript
+// vite.config.ts
+export default defineConfig({
+  server: {
+    host: true,
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'https://api.example.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+})
+```
+
+This proxy only works in dev. For production `.ehpk`, the WebView makes requests directly — your API must have CORS headers or you must route through a proxy.
+
+### Common mistake: free CORS proxy services
+
+Free proxies like `corsproxy.io`, `allorigins.win`, and `api.codetabs.com` are unreliable — they go down, return 403s, or timeout without warning. If your app depends on a third-party API without CORS, deploy your own Cloudflare Worker (free, 5 minutes) or find a mirror that has CORS headers natively.
+
 ## Distribution
 
 Once the `.ehpk` file is verified, submit it to the **Even Hub developer portal** for review and publication. The portal will validate the package, run compatibility checks, and make the app available to Even Hub G2 users after approval.
