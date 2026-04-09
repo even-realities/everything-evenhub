@@ -104,7 +104,7 @@ interface TextContainerProperty {
   containerID: number      // unique integer ID for this container
   containerName: string    // max 16 characters
   isEventCapture: 0 | 1   // 1 = this container receives user input events; exactly one container must have 1
-  content: string          // initial text content, max 1000 bytes
+  content: string          // initial text content, max 999 bytes
 }
 ```
 
