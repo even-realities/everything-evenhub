@@ -11,16 +11,8 @@ Pixel-accurate text and list measurement for Even Realities G2 smart glasses. Pr
 
 ## Installation
 
-Not yet on npm. Install from git:
-
 ```bash
-npm install git+https://github.com/even-realities/even-pretext.git
-```
-
-For browser usage, include the pre-built bundle (exposes `window.FontMeasure`):
-
-```html
-<script src="public/lib/font_measure.js"></script>
+npm install @evenrealities/pretext
 ```
 
 ## Display Constants
@@ -32,14 +24,14 @@ For browser usage, include the pre-built bundle (exposes `window.FontMeasure`):
 
 ## API
 
-All functions are exported from `even-pretext`.
+All functions are exported from `@evenrealities/pretext`.
 
 ### `getTextWidth(text: string): number`
 
 Returns single-line pixel width of a string (with kerning, no wrapping).
 
 ```ts
-import { getTextWidth } from 'even-pretext';
+import { getTextWidth } from '@evenrealities/pretext';
 const width = getTextWidth('Hello, world!'); // => 79
 ```
 
@@ -48,7 +40,7 @@ const width = getTextWidth('Hello, world!'); // => 79
 Measures multi-line text layout with word wrapping. When `containerPadding` is provided, it is subtracted from both sides of `maxWidth` for wrapping and added to top and bottom of the returned `height`.
 
 ```ts
-import { measureTextWrap } from 'even-pretext';
+import { measureTextWrap } from '@evenrealities/pretext';
 
 // Without padding — maxWidth is the text area width
 const result = measureTextWrap('The quick brown fox jumps over the lazy dog', 200);
@@ -80,7 +72,7 @@ const padded = measureTextWrap('Hello world', 300, 8);
 Truncates a string to fit within a pixel budget, appending `'...'` if needed. Returns the original string unchanged when it already fits. Uses binary search and handles emoji/surrogate pairs correctly.
 
 ```ts
-import { pxTruncate } from 'even-pretext';
+import { pxTruncate } from '@evenrealities/pretext';
 
 const label = pxTruncate('Hello, world!', 60); // => 'Hell...'
 const fits  = pxTruncate('Hi', 60);            // => 'Hi'
@@ -102,7 +94,7 @@ const fits  = pxTruncate('Hi', 60);            // => 'Hi'
 Measures a list container layout. Each item is 40px tall. When `itemWidth > 0`, text is truncated with ellipsis; when `0` (default) it auto-sizes.
 
 ```ts
-import { measureList } from 'even-pretext';
+import { measureList } from '@evenrealities/pretext';
 const result = measureList(
   [
     { text: 'First item' },
@@ -168,7 +160,7 @@ Container (width × height)
 ### Measuring text for a container with padding/border
 
 ```ts
-import { measureTextWrap } from 'even-pretext';
+import { measureTextWrap } from '@evenrealities/pretext';
 
 const containerW = 560;
 const containerH = 258;
@@ -202,7 +194,7 @@ const m = measureTextWrap(text, 560 - 2 * (padding + border));
 ### Size a text container to fit its content
 
 ```ts
-import { measureTextWrap } from 'even-pretext';
+import { measureTextWrap } from '@evenrealities/pretext';
 
 const containerWidth = 300;
 const padding = 8;
@@ -214,7 +206,7 @@ const result = measureTextWrap(myText, containerWidth, padding);
 ### Size a list container to fit all items
 
 ```ts
-import { measureList } from 'even-pretext';
+import { measureList } from '@evenrealities/pretext';
 
 const padding = 8;
 const result = measureList(items, padding);
@@ -224,13 +216,13 @@ const result = measureList(items, padding);
 ### Truncate text to fit a container
 
 ```ts
-import { pxTruncate } from 'even-pretext';
+import { pxTruncate } from '@evenrealities/pretext';
 
 // Single-line truncation
 const label = pxTruncate(longText, containerWidth);
 
 // Multiline: truncate each line individually
-import { measureTextWrap } from 'even-pretext';
+import { measureTextWrap } from '@evenrealities/pretext';
 const { lineWidths } = measureTextWrap(longText, containerWidth);
 // If the last line is too long after wrapping, truncate it
 ```
