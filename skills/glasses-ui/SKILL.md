@@ -227,6 +227,12 @@ shutDownPageContainer(type: number): Promise<boolean>
 - **Always match `containerID` and `containerName` exactly** when calling `textContainerUpgrade` — mismatches silently fail
 - **Do not call `updateImageRawData` concurrently** — queue updates and await each before sending the next
 - **Pre-paginate long text** at ~400–500 character boundaries and use `rebuildPageContainer` on scroll events
+- **Image frames cost ~0.5s each over BLE** — no compression, no delta encoding; design turn-based and avoid loops that assume multi-FPS
+- **Text updates are much faster than image updates** — use text for anything that needs to feel instant; let image containers catch up on their own
+- **Serialize all bridge calls, not just images** — `await` each before starting the next; concurrent render + storage calls can crash the connection
+- **Add a per-call timeout to BLE calls** — a single flaky hop can hang ~30s; wrap calls in `Promise.race` with a few-second cap
+- **Debounce persistent state writes** — `setLocalStorage` shares the same BLE link; debounce on tick/page-turn and flush on exit
+- **Call `createStartUpPageContainer` exactly once** — every subsequent render uses `rebuildPageContainer` or a `*Upgrade` call
 
 ## Common UI Patterns
 

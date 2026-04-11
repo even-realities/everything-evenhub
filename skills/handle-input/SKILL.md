@@ -47,6 +47,7 @@ Events route differently depending on the **active container type** (the one wit
 | Foreground enter | `event.sysEvent` | `4` (FOREGROUND_ENTER_EVENT) |
 | Foreground exit | `event.sysEvent` | `5` (FOREGROUND_EXIT_EVENT) |
 | Abnormal exit | `event.sysEvent` | `6` (ABNORMAL_EXIT_EVENT) |
+| System exit | `event.sysEvent` | `7` (SYSTEM_EXIT_EVENT) |
 
 ## OsEventTypeList enum values
 
@@ -59,8 +60,8 @@ Events route differently depending on the **active container type** (the one wit
 | 4 | FOREGROUND_ENTER_EVENT | App comes to foreground |
 | 5 | FOREGROUND_EXIT_EVENT | App goes to background |
 | 6 | ABNORMAL_EXIT_EVENT | Unexpected disconnect |
-| — | IMU_DATA_REPORT | IMU data sample |
-| — | SYSTEM_EXIT_EVENT | System exit |
+| 7 | SYSTEM_EXIT_EVENT | System-level exit (e.g. user confirmed exit dialog) |
+| 8 | IMU_DATA_REPORT | IMU data sample |
 
 ## Event Models
 
@@ -145,6 +146,39 @@ const unsubscribe = bridge.onEvenHubEvent(event => {
 ## G2 vs R1 Distinction
 
 G2 (temple touchpads) and R1 (ring touchpads) share the same gesture set. To distinguish between them, check `eventSource` in `Sys_ItemEvent`. The `EventSourceType` value indicates whether input came from the left arm, right arm, or ring accessory.
+
+## Exit Mechanism
+
+Every app should provide a way to exit via glasses/ring interaction. Use the SDK's built-in system exit dialog rather than building your own confirmation UI.
+
+**Canonical pattern — double-tap to show system exit dialog:**
+
+```typescript
+if (eventType === 3) { // DOUBLE_CLICK_EVENT
+  // Show the system exit dialog. Don't clean up resources here —
+  // the user can still cancel. If they confirm, the SDK fires
+  // SYSTEM_EXIT_EVENT (7) and you clean up in that handler.
+  bridge.shutDownPageContainer(1)
+  return
+}
+```
+
+**`shutDownPageContainer` modes:**
+- `shutDownPageContainer(0)` — immediate exit, no confirmation
+- `shutDownPageContainer(1)` — system exit confirmation dialog (recommended)
+
+Do not `unsubscribe()` / stop hardware / flush state *before* calling `shutDownPageContainer(1)`. If you do and the user taps cancel, the app is still on screen but no longer listening for events. Clean up in the `ABNORMAL_EXIT_EVENT` / `SYSTEM_EXIT_EVENT` handlers instead.
+
+## Lifecycle Events
+
+Handle all four lifecycle events for a clean app:
+
+| Event | When to use it |
+|-------|----------------|
+| `FOREGROUND_ENTER_EVENT` (4) | Re-render current state, resume timers/IMU |
+| `FOREGROUND_EXIT_EVENT` (5) | Flush pending state to `setLocalStorage`, pause timers |
+| `ABNORMAL_EXIT_EVENT` (6) | Stop hardware (`imuControl(false)`, `audioControl(false)`), unsubscribe, flush state |
+| `SYSTEM_EXIT_EVENT` (7) | Same cleanup as ABNORMAL_EXIT — user confirmed exit from the system dialog |
 
 ## Important Notes
 

@@ -119,6 +119,30 @@ Persist data to the Even Realities App (survives app restarts):
 - `await bridge.setLocalStorage(key, value)` — stores a string value; returns `boolean` indicating success
 - `await bridge.getLocalStorage(key)` — retrieves a stored string; returns an empty string if the key does not exist
 
+### SDK localStorage is the only reliable persistence
+
+The Even App WebView is a Flutter WebView. **Browser IndexedDB and browser `localStorage` do NOT reliably persist across app restarts** in this environment — data saved there can be lost when the user closes and reopens the app.
+
+Use `bridge.setLocalStorage` / `bridge.getLocalStorage` for all user state: settings, progress, bookmarks, preferences, cached content. For large content (e.g. ebook text), chunk it across multiple keys:
+
+```typescript
+const CHUNK_SIZE = 50_000  // chars per key
+const PREFIX = 'myapp.content_'
+
+async function saveContent(bridge: EvenAppBridge, id: string, text: string) {
+  const chunks = Math.ceil(text.length / CHUNK_SIZE)
+  await bridge.setLocalStorage(`${PREFIX}${id}_n`, String(chunks))
+  for (let i = 0; i < chunks; i++) {
+    await bridge.setLocalStorage(
+      `${PREFIX}${id}_${i}`,
+      text.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE),
+    )
+  }
+}
+```
+
+See `glasses-ui` → Best Practices for debouncing and serializing bridge writes.
+
 ---
 
 ## Cleanup on Exit

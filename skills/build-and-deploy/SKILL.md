@@ -137,6 +137,48 @@ Do NOT use a key-value map format:
 
 ---
 
+## CORS in the WebView
+
+The Even App runs your plugin inside a real browser engine (Chromium on Android, WKWebView on iOS). **Full CORS enforcement applies.** The `app.json` network whitelist is an Even-level permission check — it does NOT bypass CORS. You need BOTH:
+
+1. The domain whitelisted in `app.json` `permissions.network.whitelist`, AND
+2. The remote API to respond with the correct CORS headers (`Access-Control-Allow-Origin`, etc.)
+
+If the API you're calling doesn't send CORS headers, `fetch()` will fail with a network error even though the domain is whitelisted.
+
+| Scenario | Fix |
+|---|---|
+| API has CORS headers | Just whitelist the domain in `app.json` — it works |
+| API has no CORS headers | Use your own backend, a Cloudflare Worker proxy (free tier), or find a CORS-enabled mirror |
+| Dev server (localhost) is blocked by CORS | Add a Vite proxy in `vite.config.ts` — see below |
+
+### Vite dev proxy
+
+Use a Vite proxy to avoid CORS during local development:
+
+```typescript
+// vite.config.ts
+export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://api.example.com',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/api/, ''),
+      },
+    },
+  },
+})
+```
+
+This proxy only works in dev. For the production `.ehpk`, the WebView makes requests directly — your API must have CORS headers, or you must route through your own proxy.
+
+### Free CORS proxy services are unreliable
+
+Public proxies like `corsproxy.io`, `allorigins.win`, and `api.codetabs.com` go down, return 403s, or timeout without warning. If your app depends on a third-party API without CORS, deploy your own Cloudflare Worker (free tier, ~5 min setup) or find a mirror that serves CORS headers natively.
+
+---
+
 ## evenhub pack Options
 
 ```

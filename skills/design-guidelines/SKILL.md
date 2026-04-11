@@ -72,6 +72,43 @@ Full supported glyph tables: https://github.com/nickustinov/even-g2-notes
 - **No concurrent image sends** — wait for each to complete
 - Use simple/flat colors; glasses have limited memory
 
+## Phone-Side App UI (Flutter WebView host)
+
+The glasses render monochrome green on black, but the Flutter WebView that hosts your plugin on the phone has its own visual identity. Match the Even app design system when building phone-side config / settings / library screens so your plugin feels native inside Even Hub.
+
+### Color tokens
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--color-text` | `#232323` (TC-1st) | `#FFFFFF` | Primary text |
+| `--color-text-dim` | `#7B7B7B` (TC-2nd) | `#8A8A8A` | Secondary text, timestamps, captions |
+| `--color-bg` | `#FFFFFF` (BC-1st) | `#111111` | Page background |
+| `--color-surface` | `#EEEEEE` (BC-3rd) | `#1A1A1A` | Card / row background |
+| `--color-input-bg` | `rgba(35,35,35,0.08)` | `rgba(255,255,255,0.08)` | Search bar, input fields |
+| `--color-accent` | `#FEF991` | `#FEF991` | Brand accent (sparingly — buttons, highlights) |
+| `--color-text-on-accent` | `#FFFFFF` | `#FFFFFF` | Text on accent backgrounds |
+
+**Brand rules:**
+- `#FEF991` is Even brand yellow — use only for accent (buttons, highlights), never as a page background
+- `#3CFA44` is glasses-display green — use ONLY on the G2 display, NEVER in phone-side UI
+
+### Typography
+
+Primary: **FK Grotesk Neue** (negative letter-spacing for a tight, editorial feel). Fallback: **Source Han Sans** for CJK, system sans for everything else.
+
+| Style | Size | Weight | Letter-spacing |
+|---|---|---|---|
+| Display | 34 px | 700 | -0.02em |
+| Title | 24 px | 600 | -0.02em |
+| Subtitle | 18 px | 500 | -0.01em |
+| Body | 16 px | 400 | -0.01em |
+| Caption | 13 px | 400 | 0 |
+| Label | 11 px | 500 | 0.04em (uppercase) |
+
+### Spacing
+
+Use a 4/8 px grid: `4 8 12 16 24 32 48 64`. Card padding: 16. Section spacing: 24–32. Screen edge padding: 20.
+
 ## Figma Design Guidelines
 
 Official design guidelines covering layout principles, component patterns, interaction models, and visual standards:
