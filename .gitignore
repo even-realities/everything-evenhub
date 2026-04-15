@@ -1,0 +1,5 @@
+node_modules/
+harness/.output/*
+!harness/.output/.gitkeep
+docs/
+.DS_Store
