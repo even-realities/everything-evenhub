@@ -1,0 +1,23 @@
+{
+  "name": "@evenrealities/everything-evenhub",
+  "version": "0.0.1",
+  "description": "AI development skills for Even Realities G2 smart glasses apps — scaffolding, UI, input handling, device features, simulator testing, font measurement, and SDK/CLI reference",
+  "keywords": [
+    "even-realities",
+    "g2",
+    "smart-glasses",
+    "claude-code",
+    "skills"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/even-realities/everything-evenhub"
+  },
+  "dependencies": {
+    "@evenrealities/even_hub_sdk": "^0.0.10",
+    "@evenrealities/evenhub-cli": "^0.1.11",
+    "@evenrealities/evenhub-simulator": "^0.7.1",
+    "@evenrealities/pretext": "^0.1.3"
+  }
+}

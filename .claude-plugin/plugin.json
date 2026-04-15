@@ -1,0 +1,8 @@
+{
+  "name": "everything-evenhub",
+  "version": "0.0.1",
+  "description": "AI development skills for Even Realities G2 smart glasses apps — scaffolding, UI, input handling, device features, simulator testing, font measurement, and SDK/CLI reference for G2 smart glasses",
+  "author": {
+    "name": "Even Realities"
+  }
+}
