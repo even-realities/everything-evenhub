@@ -30,6 +30,9 @@ After installation, try these in any Claude Code session:
 # Scaffold a new G2 app
 /quickstart my-weather-app
 
+# Scaffold with a live Soniox speech-to-text demo wired up
+/quickstart my-asr-app --with-asr
+
 # Build and package for distribution
 /build-and-deploy
 
@@ -69,7 +72,7 @@ During development, use these skills to implement features:
 
 | Tier | Skill | Description |
 |------|-------|-------------|
-| Tier 1 — One-Click | `quickstart` | Scaffold a new G2 app from scratch |
+| Tier 1 — One-Click | `quickstart` | Scaffold a new G2 app from scratch. Pass `--with-asr` to also wire up a live Soniox speech-to-text demo with double-tap-to-exit. |
 | Tier 1 — One-Click | `build-and-deploy` | Package and publish app to Even Hub |
 | Tier 2 — Core Development | `glasses-ui` | Build glasses display UI with containers, text, images, and lists |
 | Tier 2 — Core Development | `handle-input` | Handle touchpad gestures, ring input, and lifecycle events |
