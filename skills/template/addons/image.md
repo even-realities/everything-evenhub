@@ -14,14 +14,10 @@ None required for the scaffold. If your implementation needs client-side image p
 
 ### B. `app.json` permissions
 
-Append only if the app will fetch images over the network. For app-bundled images, skip this section.
+**Do not append anything by default.** If your implementation fetches images over the network, add a `network` permission at that point with a non-empty `whitelist` (empty whitelists fail `evenhub pack` validation). If the app uses bundled images only, skip this entirely. Example once you know the hosts:
 
 ```json
-{
-  "name": "network",
-  "desc": "Fetch images for display on the glasses.",
-  "whitelist": []
-}
+{ "name": "network", "desc": "Fetch images for display on the glasses.", "whitelist": ["https://cdn.example.com"] }
 ```
 
 ---
@@ -86,4 +82,4 @@ Print to the user after scaffolding:
 
 - `--with-image` currently scaffolds a **placeholder** — `src/image/renderer.ts` throws when called.
 - Implement the renderer using the G2 SDK's image container APIs (see the `sdk-reference` skill for the exact surface).
-- Until implemented, remove the image-related code paths from `src/main.ts` or catch the thrown error.
+- Since Section E above does not wire `renderImage()` into `src/main.ts`, the thrown error is dormant until you call it yourself. No runtime crash until you integrate it.

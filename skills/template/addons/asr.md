@@ -14,18 +14,13 @@ No extra npm packages are needed for the scaffold itself. If your chosen STT pro
 
 ### B. `app.json` permissions
 
-Append these two entries to the `permissions` array in `app.json`:
+Append this entry to the `permissions` array in `app.json`:
 
 ```json
-{ "name": "g2-microphone", "desc": "Capture audio from the glasses mic for live transcription." },
-{
-  "name": "network",
-  "desc": "Stream audio to your chosen speech-to-text service.",
-  "whitelist": []
-}
+{ "name": "g2-microphone", "desc": "Capture audio from the glasses mic for live transcription." }
 ```
 
-Fill in `whitelist` with your provider's hosts once you choose one (e.g. `["https://api.example.com", "wss://stream.example.com"]`). Leave empty until then — the companion app will block outbound traffic until you add the hosts.
+**Do not add the `network` permission here.** `network` requires a non-empty `whitelist` to pass `evenhub pack` validation, and we don't know your STT provider's hosts yet. Once you wire up `src/asr/stt.ts` to a provider in Section F below, add the `network` entry with that provider's hosts in the same step.
 
 ---
 
@@ -234,35 +229,47 @@ function scheduleGlassesRender() {
   }, 120) // debounce display writes — BLE render queue is slow
 }
 
-const stt = startSttStream(
-  API_KEY,
-  ({ finalText, interimText }) => {
-    const combined = (finalText + interimText).trim()
-    currentContent = combined ? combined.slice(-240) : 'Listening…'
-    setTranscript(finalText, interimText)
-    scheduleGlassesRender()
-  },
-  err => {
-    setStatus('error', `STT error: ${(err as Error)?.message ?? err}`)
-    console.error('STT error:', err)
-  },
-)
+// The default stt.ts is a blank stub that throws. Catch the throw so the
+// UI shows the error chip pointing the user at the right file, instead of
+// leaving the status stuck on "Connecting…" forever.
+let stt: ReturnType<typeof startSttStream> | null = null
+try {
+  stt = startSttStream(
+    API_KEY,
+    ({ finalText, interimText }) => {
+      const combined = (finalText + interimText).trim()
+      // 240 chars is a rough fit for the 576x288 text container at default font.
+      currentContent = combined ? combined.slice(-240) : 'Listening…'
+      setTranscript(finalText, interimText)
+      scheduleGlassesRender()
+    },
+    err => {
+      setStatus('error', `STT error: ${(err as Error)?.message ?? err}`)
+      console.error('STT error:', err)
+    },
+  )
+} catch (err) {
+  setStatus('error', (err as Error)?.message ?? 'STT startup failed')
+  console.error('STT startup failed:', err)
+}
 
-await bridge.audioControl(true)
-setStatus('listening', 'Microphone live · double-tap the temple to exit')
+if (stt) {
+  await bridge.audioControl(true)
+  setStatus('listening', 'Microphone live · double-tap the temple to exit')
+}
 
 let cleanedUp = false
 function cleanup() {
   if (cleanedUp) return
   cleanedUp = true
   bridge.audioControl(false)
-  stt.close()
+  stt?.close()
   unsubscribe()
 }
 
 const unsubscribe = bridge.onEvenHubEvent(event => {
   const pcm = event.audioEvent?.audioPcm
-  if (pcm) stt.sendPcm(pcm)
+  if (pcm) stt?.sendPcm(pcm)
 
   const sys = event.sysEvent
   if (!sys) return
@@ -290,9 +297,13 @@ Notice that this file will **throw at runtime** until the user implements `src/a
 
 Print these to the user after scaffolding:
 
-- Open **`src/asr/stt.ts`** and wire up your preferred STT provider. Until you do, the app will throw on startup with a message pointing you at that file.
+- Open **`src/asr/stt.ts`** and wire up your preferred STT provider. Until you do, the app will show a "configure stt.ts" error chip on startup.
 - Copy **`.env.example` → `.env.local`** and paste your provider's API key into `VITE_STT_API_KEY`.
-- Add your provider's WebSocket / HTTP hosts to the `network` permission's `whitelist` in **`app.json`**. The companion app blocks outbound traffic to un-whitelisted hosts.
+- Add a `network` permission to **`app.json`** with your provider's hosts in the `whitelist` array. Example once you've picked a provider:
+  ```json
+  { "name": "network", "desc": "Stream audio to STT.", "whitelist": ["https://api.yourprovider.com", "wss://stream.yourprovider.com"] }
+  ```
+  The `network` permission is omitted by default because `evenhub pack` rejects an empty whitelist.
 - The G2 mic emits **PCM s16le @ 16 kHz, mono**. Most providers accept this format directly. Resample if yours doesn't.
 - On first run the G2 prompts the wearer to grant mic access.
 - Display updates are debounced to 120 ms because the BLE render queue can't keep up with per-token writes.

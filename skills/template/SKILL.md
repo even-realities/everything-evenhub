@@ -16,13 +16,17 @@ If the user passed no flags, this skill produces the same output as `quickstart`
 
 ## Step 1 — Parse `$ARGUMENTS`
 
-1. Split `$ARGUMENTS` on whitespace.
-2. Collect every token that starts with `--with-` into an `ADDONS` list. Strip the `--with-` prefix → the add-on name (e.g. `--with-asr` → `asr`).
-3. The remaining tokens form the project name. If empty, default to `my-evenhub-app`.
-4. Sanitise the project name: strip non-alphanumeric characters, lowercase, collapse to hyphens (e.g. `"My Cool App"` → `my-cool-app`).
+1. Split `$ARGUMENTS` on whitespace. Flags may appear in any position (before, after, or interleaved with the project name).
+2. Collect every token that starts with `--with-` into an `ADDONS` list. For each flag:
+   - Strip everything after `=` if present (`--with-asr=anything` → `--with-asr`).
+   - Strip the `--with-` prefix → the add-on name (e.g. `--with-asr` → `asr`).
+   - Reject flags with an empty suffix (`--with-` or `--with-=`) with a clear error — ask the user what they meant.
+   - Deduplicate — if the same flag appears twice, apply the add-on once.
+3. The remaining tokens (after removing flags) concatenate to form the project name. If empty, default to `my-evenhub-app`.
+4. Sanitise the project name: lowercase, replace non-alphanumeric runs with single hyphens, trim leading/trailing hyphens (e.g. `"My Cool App!"` → `my-cool-app`).
 5. Derive `package_id` slug by removing hyphens (e.g. `my-cool-app` → `mycoolapp`). The `package_id` in `app.json` must be lowercase with no hyphens (e.g. `com.example.mycoolapp`).
 
-**Validate each add-on name before continuing.** For each entry in `ADDONS`, verify that `skills/template/addons/{name}.md` exists relative to this skill file. If any requested add-on has no matching file, stop and tell the user which flag is unknown and list the available add-ons (by listing the files in `addons/`). Do not silently skip unknown flags.
+**Validate each add-on name before continuing.** For each entry in `ADDONS`, verify that `skills/template/addons/{name}.md` exists relative to this skill file. If any requested add-on has no matching file, **stop immediately** — do not continue to Step 2. Tell the user which flag is unknown, list the available add-ons (by listing the files in `addons/`), and wait for them to confirm or correct the flag. Do not silently skip unknown flags or proceed on a best-effort basis.
 
 ---
 
@@ -138,7 +142,14 @@ Add-ons may fully overwrite this file in Step 9.
 
 ## Step 9 — Apply each add-on in `ADDONS`
 
-For each add-on name collected in Step 1, read the corresponding `addons/{name}.md` file and apply every instruction in that file. Add-ons are applied **in the order the flags were passed**, so if two add-ons modify the same file, the last one wins.
+For each add-on name collected in Step 1, read the corresponding `addons/{name}.md` file and apply every instruction in that file. Add-ons are applied **in the order the flags were passed**.
+
+**Handle file collisions explicitly.** If two add-ons both create/modify the same file (commonly `src/main.ts`):
+1. Stop before blindly overwriting.
+2. Tell the user both add-ons touch the file, summarise what each one wants, and ask how to merge.
+3. Prefer a merge that keeps both sets of wiring working (e.g. run ASR *and* render an image) over "last one wins."
+
+Only silently proceed when an add-on writes a file the other add-ons don't touch (e.g. `src/asr/stt.ts` is ASR-only; `src/image/renderer.ts` is image-only).
 
 Each add-on file follows the same structure:
 
