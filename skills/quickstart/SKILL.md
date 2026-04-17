@@ -1,11 +1,13 @@
 ---
 name: quickstart
-description: Scaffold a new Even Hub G2 smart glasses app from scratch with Vite, TypeScript, SDK, simulator, and CLI. Use when creating a new Even Hub project, starting a glasses app, or bootstrapping development.
+description: Scaffold a new Even Hub G2 smart glasses app from scratch with Vite, TypeScript, SDK, simulator, and CLI. Use when creating a new Even Hub project, starting a glasses app, or bootstrapping development. For opt-in feature add-ons use the `template` skill instead.
 allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [project name or description]
 ---
 
 You are scaffolding a complete Even Hub G2 smart glasses project. Follow every step below in order. Do not skip any step. Use the project name derived from `$ARGUMENTS` (default to `my-evenhub-app` if none is given).
+
+> **Looking for opt-in features?** This skill scaffolds the minimal base project. If you want modular add-ons (live transcription, image display, etc.), use the `template` skill instead — it accepts `--with-{feature}` flags that layer on top of the same base.
 
 ## What This Does
 
@@ -20,13 +22,11 @@ Creates a fully working Even Hub project directory containing:
 
 ## Steps
 
-### 1. Determine the project name and flags
+### 1. Determine the project name
 
 Extract the project name from `$ARGUMENTS`. Strip spaces and special characters to produce a valid directory name (e.g. `"My Cool App"` → `my-cool-app`). If no argument is provided, use `my-evenhub-app`.
 
 Also derive a `package_id` slug by removing hyphens from the directory name (e.g. `my-cool-app` → `mycoolapp`). The `package_id` in `app.json` must be lowercase with no hyphens (e.g. `com.example.mycoolapp`).
-
-**Check for the `--with-asr` flag** in `$ARGUMENTS`. If present, set `WITH_ASR = true` and follow the **ASR Add-on** section at the end of this file in addition to the base steps. Strip the flag from the project name.
 
 ### 2. Create the project with Vite
 
@@ -75,7 +75,7 @@ This writes `app.json` to the project root. If the command is interactive, fill 
 
 ### 6b. Lock the WebView viewport
 
-The companion-app WebView is a real browser engine, so pinch and double-tap zoom work by default — which is almost never what you want for a fixed-layout glasses plugin. Apply this to **every** scaffold (with or without `--with-asr`).
+The companion-app WebView is a real browser engine, so pinch and double-tap zoom work by default — which is almost never what you want for a fixed-layout glasses plugin. Apply this to **every** scaffold.
 
 **1. Edit `index.html`** — replace the default viewport meta tag with a zoom-locked one:
 
@@ -92,8 +92,6 @@ html, body {
   overscroll-behavior: none;       /* no pull-to-refresh or rubber-band scroll */
 }
 ```
-
-For the `--with-asr` flow the CSS goes inside `src/ui.ts`'s injected stylesheet.
 
 ### 7. Replace `src/main.ts` with starter code and clean up boilerplate
 
@@ -124,15 +122,6 @@ const result = await bridge.createStartUpPageContainer(new CreateStartUpPageCont
 }))
 console.log('Page created:', result === 0 ? 'success' : 'failed')
 ```
-
-### 7b. ASR Add-on (only if `WITH_ASR` is true)
-
-If the user passed `--with-asr`, apply the **ASR Add-on** section at the end of this file now, before confirming the project structure. It will:
-- Add `g2-microphone` and `network` permissions (with Soniox whitelist) to `app.json`
-- Create `.env.example` with a blank Soniox key
-- Write `src/asr/soniox.ts` (streaming WebSocket client, English language hint)
-- Write `src/ui.ts` (minimal companion-app UI: status chip + transcript mirror)
-- Overwrite `src/main.ts` with a live-transcript demo that mounts the UI, streams mic audio to Soniox, and handles double-tap to show the system exit dialog
 
 ### 8. Confirm the project structure
 
@@ -233,335 +222,6 @@ Keep these constraints in mind when designing layouts: full-width containers sho
 - **SDK package**: [@evenrealities/even_hub_sdk on npm](https://www.npmjs.com/package/@evenrealities/even_hub_sdk)
 - **Official docs**: https://hub.evenrealities.com/docs/getting-started/overview
 - **Community Discord**: https://discord.gg/Y4jHMCU4sv
-
----
-
-## ASR Add-on
-
-Apply this section only when the user passed `--with-asr` in `$ARGUMENTS`. Uses Soniox streaming STT over WebSocket with raw PCM from the G2 microphone (16 kHz, s16le, mono — the native format emitted by `bridge.audioControl(true)`).
-
-### A. Update `app.json` permissions
-
-Replace the `permissions: []` array with:
-
-```json
-"permissions": [
-  { "name": "g2-microphone", "desc": "Capture audio from the glasses mic for live transcription." },
-  {
-    "name": "network",
-    "desc": "Stream audio to the Soniox speech-to-text service.",
-    "whitelist": ["https://stt-rt.soniox.com", "wss://stt-rt.soniox.com"]
-  }
-]
-```
-
-### B. Create `.env.example`
-
-Write `.env.example` at the project root with:
-
-```
-# Soniox streaming STT API key — get one at https://soniox.com
-# Copy this file to `.env.local` and fill in your key. Never commit `.env.local`.
-VITE_SONIOX_API_KEY=
-```
-
-Also ensure `.env.local` is in `.gitignore` (Vite's default `.gitignore` already includes `*.local`, so usually no action needed — verify).
-
-### C. Write `src/asr/soniox.ts`
-
-Create the directory and file. Contents:
-
-```typescript
-// Minimal Soniox streaming STT client for raw PCM s16le @ 16 kHz, mono.
-// Docs: https://soniox.com/docs/speech-to-text/core-concepts/real-time-transcription
-//
-// Soniox sends cumulative snapshots: each message contains the FULL token
-// array so far, with is_final flipping from false → true as tokens commit.
-// Treat each callback as a full snapshot, not a delta.
-
-const SONIOX_WS_URL = 'wss://stt-rt.soniox.com/transcribe-websocket'
-
-export interface SonioxSnapshot {
-  finalText: string     // stable, confirmed transcript
-  interimText: string   // unstable tail, may change
-  finished: boolean     // true on the server's final message
-}
-
-export interface SonioxClient {
-  sendPcm(chunk: Uint8Array): void
-  close(): void           // signals end-of-stream; server closes the socket
-}
-
-export function startSonioxStream(
-  apiKey: string,
-  onSnapshot: (snap: SonioxSnapshot) => void,
-  onError?: (err: unknown) => void,
-): SonioxClient {
-  const ws = new WebSocket(SONIOX_WS_URL)
-  let open = false
-  const queue: Uint8Array[] = []
-
-  function sendChunk(chunk: Uint8Array) {
-    // Copy into a fresh ArrayBuffer so WebSocket.send accepts it under
-    // TS 6's stricter `Uint8Array<ArrayBufferLike>` typing.
-    const ab = new ArrayBuffer(chunk.byteLength)
-    new Uint8Array(ab).set(chunk)
-    ws.send(ab)
-  }
-
-  ws.addEventListener('open', () => {
-    ws.send(JSON.stringify({
-      api_key: apiKey,
-      model: 'stt-rt-v4',
-      audio_format: 'pcm_s16le',
-      sample_rate: 16000,
-      num_channels: 1,
-      language_hints: ['en'],
-    }))
-    open = true
-    for (const buf of queue) sendChunk(buf)
-    queue.length = 0
-  })
-
-  let stickyFinal = ''
-  let stickyInterim = ''
-
-  ws.addEventListener('message', e => {
-    try {
-      const raw = typeof e.data === 'string' ? e.data : ''
-      if (!raw) return
-      const msg = JSON.parse(raw)
-      if (!Array.isArray(msg.tokens)) return
-      let finalText = ''
-      let interimText = ''
-      for (const t of msg.tokens) {
-        if (t.is_final) finalText += t.text
-        else interimText += t.text
-      }
-      // Soniox's terminal message ships `tokens: []` with `finished: true`.
-      // Preserve the last known transcript so callers don't see a blank flicker.
-      if (finalText || interimText || !msg.finished) {
-        stickyFinal = finalText
-        stickyInterim = interimText
-      }
-      onSnapshot({ finalText: stickyFinal, interimText: stickyInterim, finished: !!msg.finished })
-    } catch (err) {
-      onError?.(err)
-    }
-  })
-
-  ws.addEventListener('error', err => onError?.(err))
-
-  return {
-    sendPcm(chunk) {
-      if (open && ws.readyState === WebSocket.OPEN) sendChunk(chunk)
-      else queue.push(chunk)
-    },
-    close() {
-      // Empty string signals end-of-stream. Don't call ws.close() here —
-      // the server needs to flush final tokens and will close the socket itself.
-      if (open && ws.readyState === WebSocket.OPEN) ws.send('')
-    },
-  }
-}
-```
-
-### D. Write `src/ui.ts` — minimal companion-app UI
-
-Create `src/ui.ts` with the contents below. This renders a status chip and a
-live transcript inside the Even Hub WebView so the companion-app view is not
-blank and the user can see what the glasses are capturing.
-
-```typescript
-type Status = 'connecting' | 'listening' | 'error'
-
-let statusEl: HTMLDivElement
-let finalEl: HTMLSpanElement
-let interimEl: HTMLSpanElement
-
-export function mountUi() {
-  const app = document.querySelector<HTMLDivElement>('#app')!
-  app.innerHTML = `
-    <main class="panel">
-      <header>
-        <h1>ASR Demo</h1>
-        <div id="status" class="status status-connecting">Connecting…</div>
-      </header>
-      <section class="transcript" aria-live="polite">
-        <span id="final"></span><span id="interim" class="interim"></span>
-      </section>
-      <footer>Double-tap the glasses temple to exit.</footer>
-    </main>
-  `
-  statusEl = app.querySelector<HTMLDivElement>('#status')!
-  finalEl = app.querySelector<HTMLSpanElement>('#final')!
-  interimEl = app.querySelector<HTMLSpanElement>('#interim')!
-  injectStyles()
-}
-
-export function setStatus(kind: Status, text: string) {
-  if (!statusEl) return
-  statusEl.className = `status status-${kind}`
-  statusEl.textContent = text
-}
-
-export function setTranscript(finalText: string, interimText: string) {
-  if (!finalEl) return
-  finalEl.textContent = finalText
-  interimEl.textContent = interimText
-}
-
-function injectStyles() {
-  const css = `
-    :root { color-scheme: dark; }
-    html, body { margin: 0; height: 100%; background: #0a0a0a; color: #e6e6e6;
-      font: 16px/1.4 -apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif;
-      touch-action: manipulation; -webkit-text-size-adjust: 100%;
-      overscroll-behavior: none; }
-    #app { display: flex; height: 100%; }
-    .panel { display: flex; flex-direction: column; gap: 16px;
-      width: 100%; max-width: 640px; margin: 0 auto; padding: 24px; box-sizing: border-box; }
-    header { display: flex; align-items: center; justify-content: space-between; }
-    h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.02em; }
-    .status { font-size: 12px; padding: 4px 10px; border-radius: 999px;
-      border: 1px solid transparent; letter-spacing: 0.04em; text-transform: uppercase; }
-    .status-connecting { color: #a0a0a0; border-color: #333; }
-    .status-listening  { color: #3cfa44; border-color: #1f6b24; background: rgba(60,250,68,0.06); }
-    .status-error      { color: #ff6b6b; border-color: #5a1f1f; background: rgba(255,107,107,0.06); }
-    .transcript { flex: 1; overflow: auto; background: #141414; border: 1px solid #262626;
-      border-radius: 12px; padding: 20px; font-size: 18px; line-height: 1.5;
-      min-height: 180px; white-space: pre-wrap; word-break: break-word; }
-    .interim { color: #8a8a8a; }
-    footer { font-size: 12px; color: #707070; text-align: center; }
-  `
-  const style = document.createElement('style')
-  style.textContent = css
-  document.head.appendChild(style)
-}
-```
-
-### E. Overwrite `src/main.ts` with the ASR demo
-
-Replace the starter from step 7 with:
-
-```typescript
-import {
-  waitForEvenAppBridge,
-  TextContainerProperty,
-  CreateStartUpPageContainer,
-  TextContainerUpgrade,
-  OsEventTypeList,
-} from '@evenrealities/even_hub_sdk'
-import { startSonioxStream } from './asr/soniox'
-import { mountUi, setStatus, setTranscript } from './ui'
-
-mountUi()
-
-const API_KEY = import.meta.env.VITE_SONIOX_API_KEY as string
-if (!API_KEY) {
-  setStatus('error', 'VITE_SONIOX_API_KEY not set — copy .env.example to .env.local')
-  console.warn('VITE_SONIOX_API_KEY is not set.')
-}
-
-const bridge = await waitForEvenAppBridge()
-
-const transcript = new TextContainerProperty({
-  xPosition: 0,
-  yPosition: 0,
-  width: 576,
-  height: 288,
-  borderWidth: 0,
-  borderColor: 5,
-  paddingLength: 4,
-  containerID: 1,
-  containerName: 'transcript',
-  content: 'Listening…',
-  isEventCapture: 1, // required so the container receives click/double-click events
-})
-
-const created = await bridge.createStartUpPageContainer(new CreateStartUpPageContainer({
-  containerTotalNum: 1,
-  textObject: [transcript],
-}))
-if (created !== 0) {
-  setStatus('error', `createStartUpPageContainer failed: ${created}`)
-  console.error('Failed to create startup page')
-}
-
-let lastRender = ''
-let renderTimer: number | null = null
-let currentContent = 'Listening…'
-
-function scheduleGlassesRender() {
-  if (renderTimer !== null) return
-  renderTimer = window.setTimeout(async () => {
-    renderTimer = null
-    if (currentContent === lastRender) return
-    lastRender = currentContent
-    await bridge.textContainerUpgrade(new TextContainerUpgrade({
-      containerID: 1,
-      containerName: 'transcript',
-      content: currentContent,
-    }))
-  }, 120) // debounce display writes — BLE render queue is slow
-}
-
-const soniox = startSonioxStream(
-  API_KEY,
-  ({ finalText, interimText }) => {
-    const combined = (finalText + interimText).trim()
-    currentContent = combined ? combined.slice(-240) : 'Listening…'
-    setTranscript(finalText, interimText)
-    scheduleGlassesRender()
-  },
-  err => {
-    setStatus('error', `Soniox error: ${(err as Error)?.message ?? err}`)
-    console.error('Soniox error:', err)
-  },
-)
-
-await bridge.audioControl(true)
-setStatus('listening', 'Microphone live · double-tap the temple to exit')
-
-let cleanedUp = false
-function cleanup() {
-  if (cleanedUp) return
-  cleanedUp = true
-  bridge.audioControl(false)
-  soniox.close()
-  unsubscribe()
-}
-
-const unsubscribe = bridge.onEvenHubEvent(event => {
-  const pcm = event.audioEvent?.audioPcm
-  if (pcm) soniox.sendPcm(pcm)
-
-  const sys = event.sysEvent
-  if (!sys) return
-  const eventType = OsEventTypeList.fromJson(sys.eventType)
-  if (eventType === OsEventTypeList.DOUBLE_CLICK_EVENT) {
-    // Show the system exit confirmation dialog. The user can still cancel;
-    // if they confirm, SYSTEM_EXIT_EVENT fires and we clean up there.
-    bridge.shutDownPageContainer(1)
-    return
-  }
-  if (eventType === OsEventTypeList.SYSTEM_EXIT_EVENT ||
-      eventType === OsEventTypeList.ABNORMAL_EXIT_EVENT) {
-    cleanup()
-  }
-})
-
-window.addEventListener('beforeunload', cleanup)
-```
-
-### F. Note on running
-
-Tell the user after scaffolding:
-- Copy `.env.example` → `.env.local` and paste their Soniox API key.
-- On first run the G2 will prompt the wearer to grant mic access.
-- Display updates are debounced to 120 ms because the BLE render queue can't keep up with per-token writes.
-- The companion app shows a live mirror of the transcript and a status chip.
-- **Double-tap the temple** to bring up the system exit confirmation dialog.
 
 ---
 

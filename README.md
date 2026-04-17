@@ -1,6 +1,6 @@
 # Everything EvenHub
 
-Everything EvenHub is a Claude Code skill set for Even Realities G2 smart glasses app development. It provides 11 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
+Everything EvenHub is a Claude Code skill set for Even Realities G2 smart glasses app development. It provides 12 AI-assisted skills covering the full development lifecycle — from project scaffolding (minimal or flag-driven with opt-in feature add-ons) to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
 
 ## Prerequisites
 
@@ -27,11 +27,13 @@ The skills will be available after installation. To update later:
 After installation, try these in any Claude Code session:
 
 ```bash
-# Scaffold a new G2 app
+# Scaffold a new G2 app (minimal base)
 /quickstart my-weather-app
 
-# Scaffold with a live Soniox speech-to-text demo wired up
-/quickstart my-asr-app --with-asr
+# Scaffold with opt-in feature add-ons (flag-driven)
+/template my-asr-app --with-asr
+/template my-gallery-app --with-image
+/template my-mixed-app --with-asr --with-image
 
 # Build and package for distribution
 /build-and-deploy
@@ -72,7 +74,8 @@ During development, use these skills to implement features:
 
 | Tier | Skill | Description |
 |------|-------|-------------|
-| Tier 1 — One-Click | `quickstart` | Scaffold a new G2 app from scratch. Pass `--with-asr` to also wire up a live Soniox speech-to-text demo with double-tap-to-exit. |
+| Tier 1 — One-Click | `quickstart` | Scaffold a new G2 app from scratch — minimal Vite + TypeScript + SDK base. |
+| Tier 1 — One-Click | `template` | Flag-driven cousin of `quickstart`. Same base plus opt-in add-ons via `--with-{feature}` flags (e.g. `--with-asr`, `--with-image`). |
 | Tier 1 — One-Click | `build-and-deploy` | Package and publish app to Even Hub |
 | Tier 2 — Core Development | `glasses-ui` | Build glasses display UI with containers, text, images, and lists |
 | Tier 2 — Core Development | `handle-input` | Handle touchpad gestures, ring input, and lifecycle events |
@@ -83,6 +86,21 @@ During development, use these skills to implement features:
 | Tier 3 — Reference | `sdk-reference` | Look up Even Hub SDK APIs and types |
 | Tier 3 — Reference | `cli-reference` | Look up Even Hub CLI commands |
 | Tier 3 — Reference | `design-guidelines` | G2 display design constraints and best practices |
+
+## Template Add-ons
+
+The `template` skill is a flag-driven scaffold. Each `--with-{feature}` flag loads a self-contained add-on file from `skills/template/addons/{feature}.md` that layers its permissions, source files, and wiring on top of the base project.
+
+Available flags:
+
+| Flag | Status | What it scaffolds |
+|------|--------|-------------------|
+| `--with-asr` | Ready | G2 mic → provider-agnostic STT pipeline + companion UI + double-tap-to-exit. STT client ships as a blank stub (`src/asr/stt.ts`) — plug in your own provider. |
+| `--with-image` | Placeholder | 1-bit image renderer interface. Stub implementation — the scaffold lays down the file; you complete it. |
+
+No provider lock-in: all third-party integrations are blank stubs labelled "choose your own implementation here." The scaffold provides infrastructure; you choose the vendor.
+
+**Adding a new add-on:** drop a new file at `skills/template/addons/{feature}.md` following the A–F structure documented in `skills/template/SKILL.md`. It immediately becomes available as `--with-{feature}`.
 
 ## Harness Testing
 
