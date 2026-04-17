@@ -126,6 +126,8 @@ Image containers do not support `isEventCapture`. Use a text container as the ev
 - Accepts: `number[] | Uint8Array | ArrayBuffer | base64` string
 - Color depth: 4-bit greyscale (values 0–15 per pixel)
 
+**Preprocessing is optional.** The SDK accepts colour images and runs its own grayscale conversion internally — that's what the `imageToGray4Failed` return code refers to. You can hand it a PNG/JPG as-is. Client-side **dithering** (Floyd–Steinberg, Bayer, etc.) and **custom quantisation** are *techniques you may apply for better visual results on the 16-shade panel*, not required steps. Use them when a photo looks muddy after the SDK's default conversion; skip them for clean vector-style or high-contrast art that already quantises well.
+
 **Critical behavior:**
 - Image containers are **placeholders on creation** — they display nothing until `updateImageRawData` is called
 - **Always call `updateImageRawData` after creating an image container** to display content
