@@ -5,7 +5,7 @@ allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [project name] [--minimal | --asr | --image | --text-heavy]
 ---
 
-Scaffold a new Even Hub G2 project by cloning one of the starter templates from [`LesenmiaoYu/evenhub-templates`](https://github.com/LesenmiaoYu/evenhub-templates) via `degit`. Unlike `/quickstart` (which bootstraps a blank Vite app from scratch), this skill drops the user into a template that already has the wiring they asked for — mic pipeline, image container, paginated reader, etc.
+Scaffold a new Even Hub G2 project by cloning one of the starter templates from [`even-realities/evenhub-templates`](https://github.com/even-realities/evenhub-templates) via `degit`. Unlike `/quickstart` (which bootstraps a blank Vite app from scratch), this skill drops the user into a template that already has the wiring they asked for — mic pipeline, image container, paginated reader, etc.
 
 ## Available templates
 
@@ -41,7 +41,7 @@ Apply the interpretation rules above. Print a one-line summary before running: `
 ### 2. Fetch the template via degit
 
 ```bash
-npx --yes degit LesenmiaoYu/evenhub-templates/<template> <project-dir>
+npx --yes degit even-realities/evenhub-templates/<template> <project-dir>
 ```
 
 This pulls just the chosen template directory (no git history). Use `--yes` so npx doesn't prompt on first run.
@@ -85,7 +85,7 @@ Point the user at the template's own `README.md` for deeper specifics (it's the 
 
 - **Templates live in a separate public repo**, not inside this skill suite. That's intentional: the templates evolve independently (new examples, SDK version bumps) without re-releasing the skill. The skill is a thin degit wrapper.
 - **Fuzzy flag matching, not strict.** Users will type `--withasr`, `--asr`, `--with-ASR` — all of these should land on the same template. Normalize aggressively before matching.
-- **Do not edit the templates from this skill.** If a template needs a fix, open a PR against [`LesenmiaoYu/evenhub-templates`](https://github.com/LesenmiaoYu/evenhub-templates) instead.
+- **Do not edit the templates from this skill.** If a template needs a fix, open a PR against [`even-realities/evenhub-templates`](https://github.com/even-realities/evenhub-templates) instead.
 - **Prefer `/quickstart` for a truly blank slate.** `/template --minimal` is close but still ships with an `index.html` + zoom-lock CSS + our preferred `tsconfig`; `/quickstart` runs `npm create vite@latest` and wires the SDK in fresh.
 
 ## Hardware quick reference
