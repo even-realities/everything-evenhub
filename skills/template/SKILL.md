@@ -14,11 +14,11 @@ Scaffold a new Even Hub G2 project by cloning one of the starter templates from 
 | `minimal` | Bare Vite + TS + SDK scaffold. Shows "Hello from G2!" on the glasses. |
 | `asr` | Mic → STT pipeline with companion UI, double-tap exit. STT provider is a blank stub — user picks their own. |
 | `image` | `ImageContainerProperty` demo with test-pattern bitmap, tap-to-redraw, event-capture layer pattern. |
-| `text-heavy` | Long-form reader: pre-paginated, flicker-free page turns via `textContainerUpgrade`, tap/swipe navigation. |
+| `text-heavy` | Long-form reader: pre-paginated, flicker-free page turns via `textContainerUpgrade`, tap/swipe navigation. Pair with [`@evenrealities/pretext`](https://www.npmjs.com/package/@evenrealities/pretext) for accurate font measurement when char-count pagination isn't precise enough. |
 
-## How to parse `$ARGUMENTS`
+## How to interpret `$ARGUMENTS`
 
-Arguments can arrive in any order and in many spellings. Be lenient.
+Arguments can arrive in any order and in many spellings. Be lenient — this is loose pattern matching, not formal parsing.
 
 1. **Split `$ARGUMENTS` on whitespace.** Separate tokens starting with `--` (or `-`) from non-flag tokens.
 2. **Normalize flag tokens:** lowercase them, strip leading dashes, strip a leading `with-` or `with` prefix, strip internal dashes and underscores. Examples that must all map to the same thing:
@@ -34,9 +34,9 @@ If the user passes no flags at all (just a project name or nothing), default to 
 
 ## Steps
 
-### 1. Parse arguments
+### 1. Interpret arguments
 
-Apply the parsing rules above. Print a one-line summary before running: `Scaffolding <template> template → <project-dir>/`. If you defaulted to `minimal` because the flag was ambiguous or missing, say so explicitly.
+Apply the interpretation rules above. Print a one-line summary before running: `Scaffolding <template> template → <project-dir>/`. If you defaulted to `minimal` because the flag was ambiguous or missing, say so explicitly.
 
 ### 2. Fetch the template via degit
 
@@ -66,7 +66,7 @@ cd <project-dir> && npm install
   - Open `src/asr/stt.ts` and implement `startSttStream()` for their chosen provider (Deepgram, AssemblyAI, Whisper, Soniox, self-hosted — their call).
   - Add a `network` permission to `app.json` with the provider's hosts in the `whitelist` array once they pick one. `evenhub pack` rejects an empty whitelist, which is why the template ships without it.
 - **`image`** → Tell the user they can either keep the test-pattern generator or swap `makeTestPattern` for `loadImageBytes` in `src/image/renderer.ts` once they have a real asset. Remind them preprocessing is optional (the SDK handles greyscale conversion).
-- **`text-heavy`** → Tell the user to replace `src/sample.ts` with their actual content and tune `PAGE_CHAR_BUDGET` in `src/main.ts` if their text is denser or sparser than the default.
+- **`text-heavy`** → Tell the user to replace `src/sample.ts` with their actual content and tune `PAGE_CHAR_BUDGET` in `src/main.ts` if their text is denser or sparser than the default. For production-quality pagination that respects real glyph widths, install `@evenrealities/pretext` and swap the char-budget pagination for `pretext`'s layout helpers.
 - **`minimal`** → No follow-up.
 
 ### 6. Print next steps
@@ -75,8 +75,8 @@ cd <project-dir> && npm install
 cd <project-dir>
 npm run dev                                    # start Vite dev server
 npm run simulate                               # desktop simulator
-npx evenhub qr --url http://<your-ip>:5173     # QR for real glasses
-npx evenhub pack                               # build .ehpk for distribution
+npx @evenrealities/evenhub-cli qr --url http://<your-ip>:5173    # QR for real glasses
+npx @evenrealities/evenhub-cli pack                              # build .ehpk for distribution
 ```
 
 Point the user at the template's own `README.md` for deeper specifics (it's the authoritative doc).
@@ -100,4 +100,4 @@ Point the user at the template's own `README.md` for deeper specifics (it's the 
 
 ## Task
 
-Parse `$ARGUMENTS`, pick the template, scaffold it, apply template-specific follow-ups, and print next steps: $ARGUMENTS
+Interpret `$ARGUMENTS`, pick the template, scaffold it, apply template-specific follow-ups, and print next steps: $ARGUMENTS
