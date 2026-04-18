@@ -126,6 +126,8 @@ Image containers do not support `isEventCapture`. Use a text container as the ev
 - Accepts: `number[] | Uint8Array | ArrayBuffer | base64` string
 - Color depth: 4-bit greyscale (values 0–15 per pixel)
 
+**Preprocessing is optional.** You don't need to pre-grayscale or dither before sending — the SDK converts common formats internally and only returns `imageToGray4Failed` if it can't. Line art, icons, and QR codes usually render fine raw; photos and gradients benefit from a client-side contrast boost + Floyd–Steinberg dither pass on a 16-shade display, but try the naive path first.
+
 **Critical behavior:**
 - Image containers are **placeholders on creation** — they display nothing until `updateImageRawData` is called
 - **Always call `updateImageRawData` after creating an image container** to display content

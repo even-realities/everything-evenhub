@@ -1,6 +1,6 @@
 # Everything EvenHub
 
-Everything EvenHub is a Claude Code skill set for Even Realities G2 smart glasses app development. It provides 11 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
+Everything EvenHub is a Claude Code skill set for Even Realities G2 smart glasses app development. It provides 12 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
 
 ## Prerequisites
 
@@ -27,8 +27,14 @@ The skills will be available after installation. To update later:
 After installation, try these in any Claude Code session:
 
 ```bash
-# Scaffold a new G2 app
+# Scaffold a new G2 app from scratch (blank Vite base)
 /quickstart my-weather-app
+
+# Or scaffold from a curated starter template — pick the one closest to what you're building
+/template my-reader --text-heavy
+/template --asr my-transcription-app
+/template --image photo-frame
+/template --minimal hello-glasses
 
 # Build and package for distribution
 /build-and-deploy
@@ -69,7 +75,8 @@ During development, use these skills to implement features:
 
 | Tier | Skill | Description |
 |------|-------|-------------|
-| Tier 1 — One-Click | `quickstart` | Scaffold a new G2 app from scratch |
+| Tier 1 — One-Click | `quickstart` | Scaffold a blank G2 app from scratch (Vite + TS + SDK) |
+| Tier 1 — One-Click | `template` | Scaffold from a curated starter (`minimal`, `asr`, `image`, `text-heavy`) via degit |
 | Tier 1 — One-Click | `build-and-deploy` | Package and publish app to Even Hub |
 | Tier 2 — Core Development | `glasses-ui` | Build glasses display UI with containers, text, images, and lists |
 | Tier 2 — Core Development | `handle-input` | Handle touchpad gestures, ring input, and lifecycle events |
