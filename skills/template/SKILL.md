@@ -14,7 +14,7 @@ Scaffold a new Even Hub G2 project by cloning one of the starter templates from 
 | `minimal` | Bare Vite + TS + SDK scaffold. Shows "Hello from G2!" on the glasses. |
 | `asr` | Mic → STT pipeline with companion UI, double-tap exit. STT provider is a blank stub — user picks their own. |
 | `image` | `ImageContainerProperty` demo with test-pattern bitmap, tap-to-redraw, event-capture layer pattern. |
-| `text-heavy` | Long-form reader: pre-paginated, flicker-free page turns via `textContainerUpgrade`, tap/swipe navigation. Pair with [`@evenrealities/pretext`](https://www.npmjs.com/package/@evenrealities/pretext) for accurate font measurement when char-count pagination isn't precise enough. |
+| `text-heavy` | Long-form reader: pixel-accurate pagination via [`@evenrealities/pretext`](https://www.npmjs.com/package/@evenrealities/pretext) (measures each paragraph at the glyph widths LVGL uses on G2), flicker-free page turns via `textContainerUpgrade`, tap/swipe navigation. |
 
 ## How to interpret `$ARGUMENTS`
 
@@ -66,7 +66,7 @@ cd <project-dir> && npm install
   - Open `src/asr/stt.ts` and implement `startSttStream()` for their chosen provider (Deepgram, AssemblyAI, Whisper, Soniox, self-hosted — their call).
   - Add a `network` permission to `app.json` with the provider's hosts in the `whitelist` array once they pick one. `evenhub pack` rejects an empty whitelist, which is why the template ships without it.
 - **`image`** → Tell the user they can either keep the test-pattern generator or swap `makeTestPattern` for `loadImageBytes` in `src/image/renderer.ts` once they have a real asset. Remind them preprocessing is optional (the SDK handles greyscale conversion).
-- **`text-heavy`** → Tell the user to replace `src/sample.ts` with their actual content and tune `PAGE_CHAR_BUDGET` in `src/main.ts` if their text is denser or sparser than the default. For production-quality pagination that respects real glyph widths, install `@evenrealities/pretext` and swap the char-budget pagination for `pretext`'s layout helpers.
+- **`text-heavy`** → Tell the user to replace `src/sample.ts` with their actual content. Pagination is driven by the container's pixel box via `@evenrealities/pretext` — if they resize the body, edit `BODY_W` / `BODY_H` / `BODY_PAD` at the top of `src/main.ts` and pagination re-fits automatically (no char-budget to tune).
 - **`minimal`** → No follow-up.
 
 ### 6. Print next steps
