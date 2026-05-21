@@ -18,7 +18,7 @@ Extract the skill name from `$ARGUMENTS`. Valid skills: `quickstart`, `build-and
 
 Read these 3 files (all paths relative to the everything-evenhub repo root):
 
-1. `skills/<skill-name>/SKILL.md` → store as `SKILL_CONTENT`
+1. `plugins/everything-evenhub/skills/<skill-name>/SKILL.md` → store as `SKILL_CONTENT`
 2. `harness/cases/<skill-name>.md` → store as `CASE` (extract the "Simulated User Request" and "Output Directory")
 3. `harness/checklists/<skill-name>.md` → store as `CHECKLIST`
 

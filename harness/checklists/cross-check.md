@@ -1,6 +1,6 @@
 # Verification Checklist: cross-check
 
-Scan ALL files matching `skills/*/SKILL.md`. For each item, grep the relevant pattern across all skill files, extract the claimed values, and verify they are identical. Quote file and line for any disagreement.
+Scan ALL files matching `plugins/everything-evenhub/skills/*/SKILL.md`. For each item, grep the relevant pattern across all skill files, extract the claimed values, and verify they are identical. Quote file and line for any disagreement.
 
 ## 1. Display Constants (3 items)
 

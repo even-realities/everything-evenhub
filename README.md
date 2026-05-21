@@ -1,30 +1,57 @@
 # Everything EvenHub
 
-Everything EvenHub is a Claude Code skill set for Even Realities G2 smart glasses app development. It provides 12 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
+Everything EvenHub is an AI coding agent skill set for Even Realities G2 smart glasses app development. It provides 12 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
+
+Works with [Claude Code](https://claude.ai/code) and [Codex CLI](https://developers.openai.com/codex/cli).
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v18 or later
-- [Claude Code](https://claude.ai/code) CLI installed and authenticated
+- An AI coding agent: [Claude Code](https://claude.ai/code) or [Codex CLI](https://developers.openai.com/codex/cli)
 
 ## Installation
 
-In Claude Code, run:
+### Claude Code
 
 ```
 /plugin marketplace add even-realities/everything-evenhub
 /plugin install everything-evenhub@everything-evenhub
 ```
 
-The skills will be available after installation. To update later:
+To update later:
 
 ```
 /plugin marketplace update everything-evenhub
 ```
 
+### Codex CLI
+
+From your terminal (outside Codex):
+
+```bash
+codex plugin marketplace add even-realities/everything-evenhub
+```
+
+Then restart Codex and open the plugin browser:
+
+```
+/plugins
+```
+
+Select the `everything-evenhub` marketplace and install. Requires Codex CLI v0.121 or later (April 2026+).
+
+## Invoking Skills
+
+Skills are invoked with a prefix and the skill name:
+
+- Claude Code: `/quickstart my-app`
+- Codex CLI: `$quickstart my-app`
+
+The examples below use `/` — substitute `$` if you're on Codex.
+
 ## Quick Start
 
-After installation, try these in any Claude Code session:
+Try these in any session:
 
 ```bash
 # Scaffold a new G2 app from scratch (blank Vite base)
@@ -90,7 +117,7 @@ During development, use these skills to implement features:
 
 ## Harness Testing
 
-Each skill includes a harness test to verify it produces correct output when used by an AI agent. Run a test with:
+Each skill includes a harness test to verify it produces correct output when used by an AI agent. The harness itself runs in Claude Code (it uses Claude's subagent dispatch). Run a test with:
 
 ```
 /harness quickstart

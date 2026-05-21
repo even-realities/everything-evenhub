@@ -1,6 +1,6 @@
 # Verification Checklist: sdk-ground-truth
 
-Install the SDK if not present (`npm install @evenrealities/even_hub_sdk`), then read `.d.ts` files from `node_modules/@evenrealities/even_hub_sdk`. Compare against `skills/sdk-reference/SKILL.md` and any other skill that references SDK types.
+Install the SDK if not present (`npm install @evenrealities/even_hub_sdk`), then read `.d.ts` files from `node_modules/@evenrealities/even_hub_sdk`. Compare against `plugins/everything-evenhub/skills/sdk-reference/SKILL.md` and any other skill that references SDK types.
 
 ## 1. Interface Existence (5 items)
 
