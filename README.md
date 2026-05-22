@@ -1,6 +1,6 @@
 # Everything EvenHub
 
-Everything EvenHub is an AI coding agent skill set for Even Realities G2 smart glasses app development. It provides 12 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
+Everything EvenHub is an AI coding agent skill set for Even Realities G2 smart glasses app development. It provides 13 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
 
 Works with [Claude Code](https://claude.ai/code) and [Codex CLI](https://developers.openai.com/codex/cli).
 
@@ -111,6 +111,7 @@ During development, use these skills to implement features:
 | Tier 2 — Core Development | `test-with-simulator` | Run and debug your app in the Even Hub Simulator |
 | Tier 2 — Core Development | `simulator-automation` | Automate the simulator via its HTTP API — screenshots, input, console logs |
 | Tier 2 — Core Development | `font-measurement` | Pixel-accurate text and list measurement matching LVGL firmware rendering |
+| Tier 2 — Core Development | `background-state` | Persist plugin state across background/foreground transitions with `setBackgroundState` / `onBackgroundRestore` |
 | Tier 3 — Reference | `sdk-reference` | Look up Even Hub SDK APIs and types |
 | Tier 3 — Reference | `cli-reference` | Look up Even Hub CLI commands |
 | Tier 3 — Reference | `design-guidelines` | G2 display design constraints and best practices |
