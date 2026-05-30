@@ -2,7 +2,7 @@
 name: template
 description: Scaffold an Even Hub G2 app from a curated starter template (minimal, asr, image, text-heavy). Use when the user wants a ready-made starting point with working wiring, not a blank Vite project. Flag-driven — pick the template with --asr, --image, --text-heavy, or --minimal.
 allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
-argument-hint: [project name] [--minimal | --asr | --image | --text-heavy]
+argument-hint: "[project name] [--minimal | --asr | --image | --text-heavy]"
 ---
 
 Scaffold a new Even Hub G2 project by cloning one of the starter templates from [`even-realities/evenhub-templates`](https://github.com/even-realities/evenhub-templates) via `degit`. Unlike `/quickstart` (which bootstraps a blank Vite app from scratch), this skill drops the user into a template that already has the wiring they asked for — mic pipeline, image container, paginated reader, etc.

@@ -12,7 +12,7 @@ This test does NOT dispatch an implementer subagent. It directly scans all skill
 
 ## What To Check
 
-The verifier must grep all `skills/*/SKILL.md` files and compare every claim about:
+The verifier must grep all `plugins/everything-evenhub/skills/*/SKILL.md` files and compare every claim about:
 
 1. **Value ranges** — numeric min/max for properties like `borderColor`, `borderWidth`, `borderRadius`, `paddingLength`, `width`, `height`, `xPosition`, `yPosition`
 2. **Character/byte limits** — `content` max length, `containerName` max length, `itemName` max length

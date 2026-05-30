@@ -24,7 +24,7 @@ The verifier must:
 
 1. Read the SDK's TypeScript type definitions from `node_modules/@evenrealities/even_hub_sdk`
 2. Extract all exported interfaces, types, enums, and their fields
-3. Compare against claims in `skills/sdk-reference/SKILL.md` and other skills that reference SDK types
+3. Compare against claims in `plugins/everything-evenhub/skills/sdk-reference/SKILL.md` and other skills that reference SDK types
 
 Specific checks:
 
