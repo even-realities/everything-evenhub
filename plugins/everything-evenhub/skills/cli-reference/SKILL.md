@@ -125,7 +125,7 @@ evenhub --completion-fish
 | `name` | string | Yes | Max 20 characters |
 | `version` | string | Yes | Semver `x.y.z` |
 | `min_app_version` | string | Yes | Min Even Realities App version (e.g., `"2.0.0"`) |
-| `min_sdk_version` | string | Yes | Min SDK version (e.g., `"0.0.10"`) |
+| `min_sdk_version` | string | Yes | Min SDK version (e.g., `"0.0.11"`) |
 | `entrypoint` | string | Yes | Path to HTML entry relative to build folder |
 | `permissions` | array | Yes | Array of permission objects. Can be `[]` |
 | `supported_languages` | array | Yes | Valid: `en`, `de`, `fr`, `es`, `it`, `zh`, `ja`, `ko` |
@@ -139,7 +139,7 @@ evenhub --completion-fish
   "name": "My App",
   "version": "0.1.0",
   "min_app_version": "2.0.0",
-  "min_sdk_version": "0.0.10",
+  "min_sdk_version": "0.0.11",
   "entrypoint": "index.html",
   "permissions": [],
   "supported_languages": ["en"]
