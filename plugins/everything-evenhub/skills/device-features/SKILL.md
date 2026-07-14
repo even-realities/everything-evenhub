@@ -111,13 +111,13 @@ await bridge.startAppLocationUpdates({
   distanceFilter: 5,  // meters — host skips pushes smaller than this
 })
 
-const unsubscribe = bridge.onAppLocationChanged(loc => {
+const unsubscribeLocation = bridge.onAppLocationChanged(loc => {
   console.log(loc.latitude, loc.longitude, loc.speed)
 })
 
 // Stop and clean up
 await bridge.stopAppLocationUpdates()
-unsubscribe()
+unsubscribeLocation()
 ```
 
 ### `AppLocationAccuracy` values
@@ -174,7 +174,7 @@ Both return `null` when the user cancels the picker / camera or denies permissio
 
 ### Sending the image to the glasses
 
-`base64` is ready to display in the WebView immediately, but pumping a 12-megapixel JPEG into a glasses container via `updateImageRawData` is expensive. **Downscale and convert to 4-bit greyscale before sending pixels to the glasses.** See `glasses-ui` for image-container patterns.
+`base64` is ready to display in the WebView immediately, but pumping a 12-megapixel JPEG into a glasses container via `updateImageRawData` is still expensive even with the SDK's internal LZ4 compression (0.0.12+) — compression shrinks the transfer, it does not resize the pixels. **Downscale to the container's dimensions and convert to 4-bit greyscale before sending pixels to the glasses.** See `glasses-ui` for image-container patterns.
 
 ---
 
