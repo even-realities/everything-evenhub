@@ -25,7 +25,7 @@ Your app is a standard HTML + TypeScript web page running inside a Flutter WebVi
 npm install @evenrealities/even_hub_sdk
 ```
 
-Current version: **0.0.11**
+Current version: **0.0.12**
 
 ---
 
@@ -74,7 +74,7 @@ const bridge = EvenAppBridge.getInstance()
 | `bridge.createStartUpPageContainer(container)` | `Promise<StartUpPageCreateResult>` | One-shot startup call to define all UI containers. 0=success, 1=invalid, 2=oversize, 3=outOfMemory |
 | `bridge.rebuildPageContainer(container)` | `Promise<boolean>` | Tear down and fully redraw all containers |
 | `bridge.textContainerUpgrade(container)` | `Promise<boolean>` | In-place text update without full redraw (max 2000 chars per call) |
-| `bridge.updateImageRawData(data)` | `Promise<ImageRawDataUpdateResult>` | Send raw pixel data to fill an image container. Calls must be serial — await each before the next. |
+| `bridge.updateImageRawData(data)` | `Promise<ImageRawDataUpdateResult>` | Send raw pixel data to fill an image container. LZ4-compressed internally by the SDK (0.0.12+) — pass raw pixels as before. Calls must be serial — await each before the next. |
 | `bridge.shutDownPageContainer(exitMode?)` | `Promise<boolean>` | Close the app. exitMode 0=exit immediately, 1=show confirmation dialog |
 | `bridge.onLaunchSource(cb)` | `() => void` | Subscribe to launch source event. Fires exactly once: `'appMenu'` or `'glassesMenu'`. Returns unsubscribe function. |
 | `bridge.onDeviceStatusChanged(cb)` | `() => void` | Subscribe to device status updates (connect type, battery, wearing, charging). Returns unsubscribe function. |
@@ -112,6 +112,7 @@ class TextContainerProperty {
   containerID?: number      // unique integer ID for this container
   containerName?: string    // max 16 characters
   isEventCapture?: number   // 0 or 1; exactly one container per page must be 1
+  zOrderIndex?: number      // stacking order, larger = front; all-or-nothing per page (0.0.12+, see Z-Order Rules)
   content?: string          // initial text content, max 1000 characters
 }
 ```
@@ -133,6 +134,7 @@ class ListContainerProperty {
   containerID?: number
   containerName?: string    // max 16 characters
   isEventCapture?: number   // 0 or 1
+  zOrderIndex?: number      // stacking order, larger = front; all-or-nothing per page (0.0.12+, see Z-Order Rules)
   itemContainer?: ListItemContainerProperty
 }
 ```
@@ -162,6 +164,7 @@ class ImageContainerProperty {
   height?: number           // 20–144
   containerID?: number
   containerName?: string    // max 16 characters
+  zOrderIndex?: number      // stacking order, larger = front; all-or-nothing per page (0.0.12+, see Z-Order Rules)
 }
 ```
 
@@ -191,6 +194,8 @@ class ImageRawDataUpdate {
 }
 ```
 
+Since 0.0.12 the SDK compresses image raw data with LZ4 internally before transfer to reduce size and update latency. Pass raw pixel data exactly as before — there is no compression flag to set.
+
 ### `CreateStartUpPageContainer`
 
 Parameter type for `bridge.createStartUpPageContainer()`.
@@ -216,6 +221,30 @@ class RebuildPageContainer {
   textObject?: TextContainerProperty[]          // text containers, max 8
   imageObject?: ImageContainerProperty[]        // image containers, max 4
 }
+```
+
+### Z-Order Rules (0.0.12+)
+
+`zOrderIndex` controls front/back stacking across all containers on a page. The SDK validates these rules before the payload reaches the native bridge:
+
+- **All-or-nothing per page** — either every list/text/image container on the page sets `zOrderIndex`, or none do. Omitting it everywhere keeps pre-0.0.12 behavior (declaration order determines overlap).
+- **Unique per page** — no two containers on the same page may share a value. There is no tie-break.
+- **Larger = closer to the front.**
+
+On violation the SDK logs an `EvenHubPageContainerValidationErrorCode` error and never calls native: `createStartUpPageContainer` returns `StartUpPageCreateResult.invalid` and `rebuildPageContainer` returns `false`.
+
+```typescript
+enum EvenHubPageContainerValidationErrorCode {
+  MissingZOrderIndex = 'MISSING_Z_ORDER_INDEX',     // some containers set zOrderIndex, others omit it
+  InvalidZOrderIndex = 'INVALID_Z_ORDER_INDEX',     // value is not a valid number
+  DuplicateZOrderIndex = 'DUPLICATE_Z_ORDER_INDEX'  // two containers share a value
+}
+
+// Run the same validation yourself before sending a page payload:
+function validateEvenHubPageContainerZOrder(container: EvenHubPageContainerLike): EvenHubPageContainerValidationResult
+
+// Human-readable message for an invalid result:
+function formatEvenHubPageContainerValidationError(result): string
 ```
 
 ### `UserInfo`
@@ -520,12 +549,13 @@ enum DeviceModel {
 
 1. **`createStartUpPageContainer` is one-shot** — call it exactly once at startup; calling it again will not work. Use `rebuildPageContainer` for subsequent full redraws.
 2. **Exactly one container must have `isEventCapture: 1`** — this designates which container receives user input. Having zero or more than one causes undefined behavior.
-3. **Container limits** — `containerTotalNum` must be 1–12; `textObject` array max 8 items; `imageObject` array max 4 items.
-4. **Image sends must be serial** — `updateImageRawData` calls must be queued and awaited one at a time; concurrent calls are not supported and will cause errors.
-5. **Image containers are placeholders** — after `createStartUpPageContainer` succeeds, image containers are empty until populated via `updateImageRawData`.
-6. **Glasses-mic `audioControl` and `imuControl` require startup to succeed** — `audioControl(true, AudioInputSource.Glasses)` and `imuControl` will fail if called before `createStartUpPageContainer` returns `StartUpPageCreateResult.success`. `audioControl(true, AudioInputSource.Phone)`, location APIs, `pickImageFromAlbum`, and `captureImageFromCamera` route through the phone and do not require the startup page.
-7. **Always unsubscribe event listeners on teardown** — `onEvenHubEvent`, `onDeviceStatusChanged`, and `onLaunchSource` all return an unsubscribe function; call it when your component/page is destroyed.
-8. **`onLaunchSource` fires only once** — register the listener early (before or immediately after `waitForEvenAppBridge`) to avoid missing the event.
+3. **`zOrderIndex` is all-or-nothing per page (0.0.12+)** — if any container sets it, every list/text/image container on that page must set a unique value; larger renders in front. Violations fail SDK-side validation: `createStartUpPageContainer` returns `invalid`, `rebuildPageContainer` returns `false`.
+4. **Container limits** — `containerTotalNum` must be 1–12; `textObject` array max 8 items; `imageObject` array max 4 items.
+5. **Image sends must be serial** — `updateImageRawData` calls must be queued and awaited one at a time; concurrent calls are not supported and will cause errors.
+6. **Image containers are placeholders** — after `createStartUpPageContainer` succeeds, image containers are empty until populated via `updateImageRawData`.
+7. **Glasses-mic `audioControl` and `imuControl` require startup to succeed** — `audioControl(true, AudioInputSource.Glasses)` and `imuControl` will fail if called before `createStartUpPageContainer` returns `StartUpPageCreateResult.success`. `audioControl(true, AudioInputSource.Phone)`, location APIs, `pickImageFromAlbum`, and `captureImageFromCamera` route through the phone and do not require the startup page.
+8. **Always unsubscribe event listeners on teardown** — `onEvenHubEvent`, `onDeviceStatusChanged`, and `onLaunchSource` all return an unsubscribe function; call it when your component/page is destroyed.
+9. **`onLaunchSource` fires only once** — register the listener early (before or immediately after `waitForEvenAppBridge`) to avoid missing the event.
 
 ---
 

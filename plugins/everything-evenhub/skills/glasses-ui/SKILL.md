@@ -25,7 +25,7 @@ Every page is composed of containers. The following limits apply per page:
 - **Maximum 8 text/list containers**
 - **Maximum 4 image containers**
 - **Exactly one container must have `isEventCapture: 1`** — this container receives user input events
-- **No z-index control** — declaration order determines overlap (later declarations render on top)
+- **Stacking order via `zOrderIndex` (SDK 0.0.12+)** — all-or-nothing per page: either every list/text/image container sets a unique `zOrderIndex` (larger = front) or none do; when omitted everywhere, declaration order determines overlap (later declarations render on top)
 - **`containerID`** must be unique per page (number)
 - **`containerName`** must be unique per page (string, max 16 characters)
 
@@ -42,6 +42,7 @@ All container types share these properties:
 | `containerID` | number | — | Unique per page |
 | `containerName` | string | max 16 chars | Unique per page |
 | `isEventCapture` | number | 0 or 1 | Exactly one container must be 1 |
+| `zOrderIndex` | number | — | Stacking order, larger = front; all-or-nothing per page, unique values (SDK 0.0.12+) |
 
 ## Border Properties
 
@@ -67,6 +68,7 @@ Text containers display scrollable or static text content.
 | `containerID` | number | — | Unique per page |
 | `containerName` | string | max 16 chars | Unique per page |
 | `isEventCapture` | number | 0 or 1 | Exactly one must be 1 |
+| `zOrderIndex` | number | — | Stacking order, larger = front (SDK 0.0.12+) |
 | `borderWidth` | number | 0–5 | 0 = no border |
 | `borderColor` | number | 0–15 | Greyscale level |
 | `borderRadius` | number | 0–10 | Rounded corners |
@@ -119,6 +121,7 @@ Image containers render 4-bit greyscale bitmap images.
 | `height` | number | 20–144 | Container height in pixels |
 | `containerID` | number | — | Unique per page |
 | `containerName` | string | max 16 chars | Unique per page |
+| `zOrderIndex` | number | — | Stacking order, larger = front (SDK 0.0.12+) |
 
 Image containers do not support `isEventCapture`. Use a text container as the event-capture layer when combining with images (see Image-Based App Pattern below).
 
@@ -214,7 +217,7 @@ shutDownPageContainer(exitMode?: number): Promise<boolean>
 - **Always match `containerID` and `containerName` exactly** when calling `textContainerUpgrade` — mismatches silently fail
 - **Do not call `updateImageRawData` concurrently** — queue updates and await each before sending the next
 - **Pre-paginate long text** at ~400–500 character boundaries and use `rebuildPageContainer` on scroll events
-- **Image frames cost ~0.5s to ~2s each over BLE** — no compression, no delta encoding; design turn-based and avoid loops that assume multi-FPS
+- **Image frames cost ~0.5s to ~2s each over BLE** — SDK 0.0.12+ LZ4-compresses raw data internally, which shortens transfers, but there is no delta encoding; design turn-based and avoid loops that assume multi-FPS
 - **Text updates are much faster than image updates** — use text for anything that needs to feel instant; let image containers catch up on their own
 - **Serialize all bridge calls, not just images** — `await` each before starting the next; concurrent render + storage calls can crash the connection
 - **Add a per-call timeout to BLE calls** — a single flaky hop can hang ~30s; wrap calls in `Promise.race` with a few-second cap
@@ -336,12 +339,14 @@ const eventLayer: TextContainerProperty = {
   content: ' ',        // single space — required, cannot be empty
   isEventCapture: 1,   // this layer catches all input events
   borderWidth: 0, borderColor: 0, paddingLength: 0,
+  zOrderIndex: 1,      // back layer (SDK 0.0.12+; if one container sets zOrderIndex, all must)
 }
 
 // Image container renders on top of the event layer
 const imageLayer: ImageContainerProperty = {
   xPosition: 0, yPosition: 0, width: 200, height: 100,
   containerID: 2, containerName: 'display',
+  zOrderIndex: 2,      // front layer — larger = closer to front
   // isEventCapture: 0 (default) — image containers do not capture events
 }
 
@@ -359,7 +364,7 @@ await bridge.updateImageRawData({
 })
 ```
 
-The text container receives events; the image container draws on top.
+The text container receives events; the image container draws on top. On SDKs before 0.0.12, drop both `zOrderIndex` fields and rely on declaration order (later declarations render on top).
 
 ## Task
 
