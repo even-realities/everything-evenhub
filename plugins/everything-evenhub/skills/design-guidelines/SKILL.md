@@ -22,7 +22,7 @@ argument-hint: [design question or task]
 - Exactly **one container must have `isEventCapture: 1`**
 - **`containerID`** must be unique per page (integer)
 - **`containerName`** must be unique per page (string, max **16 characters**)
-- **No z-index control** — declaration order determines overlap
+- **Stacking order via `zOrderIndex`** (SDK 0.0.12+) — all-or-nothing per page, unique values, larger = front; when omitted everywhere, declaration order determines overlap
 
 ## Font & Text
 
