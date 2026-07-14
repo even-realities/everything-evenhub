@@ -25,7 +25,7 @@ Your app is a standard HTML + TypeScript web page running inside a Flutter WebVi
 npm install @evenrealities/even_hub_sdk
 ```
 
-Current version: **0.0.10**
+Current version: **0.0.11**
 
 ---
 
@@ -56,10 +56,10 @@ const bridge = EvenAppBridge.getInstance()
 ## Required Call Order
 
 1. `waitForEvenAppBridge()` — wait for the bridge
-2. `bridge.createStartUpPageContainer(container)` — call **exactly once** at startup
-3. Everything else: `audioControl`, `imuControl`, `rebuildPageContainer`, event listeners, etc.
+2. `bridge.createStartUpPageContainer(container)` — call **exactly once** at startup (required for glasses-mic audio and IMU)
+3. Everything else: `audioControl`, `imuControl`, `rebuildPageContainer`, event listeners, location, photo picker / camera, etc.
 
-`audioControl` and `imuControl` will fail if `createStartUpPageContainer` has not succeeded first.
+`audioControl(true, AudioInputSource.Glasses)` and `imuControl` will fail if `createStartUpPageContainer` has not succeeded first. `audioControl(true, AudioInputSource.Phone)`, location APIs, `pickImageFromAlbum`, and `captureImageFromCamera` do **not** require the startup page — they route through the phone, not the glasses.
 
 ---
 
@@ -79,8 +79,14 @@ const bridge = EvenAppBridge.getInstance()
 | `bridge.onLaunchSource(cb)` | `() => void` | Subscribe to launch source event. Fires exactly once: `'appMenu'` or `'glassesMenu'`. Returns unsubscribe function. |
 | `bridge.onDeviceStatusChanged(cb)` | `() => void` | Subscribe to device status updates (connect type, battery, wearing, charging). Returns unsubscribe function. |
 | `bridge.onEvenHubEvent(cb)` | `() => void` | Subscribe to all hub events: listEvent, textEvent, sysEvent, audioEvent. Returns unsubscribe function. |
-| `bridge.audioControl(isOpen)` | `Promise<boolean>` | Open (`true`) or close (`false`) the microphone. Audio delivered as PCM via `audioEvent`. |
+| `bridge.audioControl(isOpen, source?)` | `Promise<boolean>` | Open (`true`) or close (`false`) the microphone. `source` is an `AudioInputSource` value — `Glasses` (default, G2 four-mic array) or `Phone` (phone mic). Audio delivered as PCM via `audioEvent` with the `source` field set. |
 | `bridge.imuControl(isOpen, reportFrq?)` | `Promise<boolean>` | Enable/disable IMU sensor. `reportFrq` is an `ImuReportPace` value (P100–P1000). |
+| `bridge.getAppLocation(options?)` | `Promise<AppLocation \| null>` | One-shot location read. `options` accepts `accuracy`, `timeoutMs`. Returns `null` if no fix in time, permission denied, or invalid coords. |
+| `bridge.startAppLocationUpdates(options?)` | `Promise<boolean>` | Begin continuous location updates. `options` accepts `accuracy`, `intervalMs`, `distanceFilter`. Subscribe with `onAppLocationChanged` to receive pushes. |
+| `bridge.stopAppLocationUpdates()` | `Promise<boolean>` | Stop continuous location updates started via `startAppLocationUpdates`. |
+| `bridge.onAppLocationChanged(cb)` | `() => void` | Subscribe to continuous-location updates. Callback receives an `AppLocation`. Returns an unsubscribe function. |
+| `bridge.pickImageFromAlbum()` | `Promise<AppImageAsset \| null>` | Open the phone's photo album for **single-image** selection. Returns `null` if the user cancels or denies the `album` permission. |
+| `bridge.captureImageFromCamera()` | `Promise<AppImageAsset \| null>` | Open the **phone** camera and capture one image. Returns `null` if the user cancels or denies the `camera` permission. The G2 has no on-glasses camera. |
 | `bridge.callEvenApp(method, params?)` | `Promise<any>` | Low-level direct call to native bridge method. Use when higher-level methods aren't available. |
 
 ---
@@ -257,6 +263,49 @@ interface DeviceStatus {
 }
 ```
 
+### `AppLocation`
+
+Location payload returned by `getAppLocation` and pushed via `onAppLocationChanged`.
+
+```typescript
+interface AppLocation {
+  latitude: number      // degrees
+  longitude: number     // degrees
+  accuracy?: number     // horizontal accuracy in meters
+  altitude?: number     // meters above sea level
+  speed?: number        // meters per second
+  heading?: number      // degrees from true north
+  timestamp?: number    // Unix milliseconds
+}
+```
+
+### `AppLocationOptions`
+
+Options object accepted by `getAppLocation` and `startAppLocationUpdates`. All fields optional.
+
+```typescript
+interface AppLocationOptions {
+  accuracy?: AppLocationAccuracy   // Low | Medium | High
+  timeoutMs?: number               // one-shot only
+  intervalMs?: number              // continuous only
+  distanceFilter?: number          // continuous only; meters — host skips smaller pushes
+}
+```
+
+### `AppImageAsset`
+
+Image payload returned by `pickImageFromAlbum` and `captureImageFromCamera`.
+
+```typescript
+interface AppImageAsset {
+  path: string         // host-side path; opaque to the WebView
+  name: string         // original filename
+  mimeType: string     // e.g. "image/jpeg", "image/png"
+  size: number         // bytes
+  base64: string       // inline data, ready for <img src="data:..."> or further processing
+}
+```
+
 ---
 
 ## Event Models
@@ -270,8 +319,19 @@ interface EvenHubEvent {
   listEvent?: List_ItemEvent
   textEvent?: Text_ItemEvent
   sysEvent?: Sys_ItemEvent
-  audioEvent?: { audioPcm: Uint8Array }
+  audioEvent?: AudioEventPayload
   jsonData?: Record<string, any>     // raw payload passthrough
+}
+```
+
+### `AudioEventPayload`
+
+Microphone audio payload on `event.audioEvent`. `source` identifies which mic the buffer came from — useful when toggling `audioControl(true, ...)` between sources at runtime.
+
+```typescript
+interface AudioEventPayload {
+  source: AudioInputSource     // Glasses | Phone
+  audioPcm: Uint8Array         // PCM 16 kHz, signed 16-bit little-endian, mono
 }
 ```
 
@@ -377,6 +437,11 @@ enum EvenAppMethod {
   GetGlassesInfo = 'getGlassesInfo',
   SetLocalStorage = 'setLocalStorage',
   GetLocalStorage = 'getLocalStorage',
+  GetAppLocation = 'getAppLocation',
+  StartAppLocationUpdates = 'startAppLocationUpdates',
+  StopAppLocationUpdates = 'stopAppLocationUpdates',
+  PickImageFromAlbum = 'pickImageFromAlbum',
+  CaptureImageFromCamera = 'captureImageFromCamera',
   CreateStartUpPageContainer = 'createStartUpPageContainer',
   RebuildPageContainer = 'rebuildPageContainer',
   UpdateImageRawData = 'updateImageRawData',
@@ -384,6 +449,17 @@ enum EvenAppMethod {
   AudioControl = 'audioControl',
   ImuControl = 'imuControl',
   ShutDownPageContainer = 'shutDownPageContainer'
+}
+
+enum AudioInputSource {
+  Glasses = 'glasses',     // G2 four-mic array (default; requires createStartUpPageContainer first)
+  Phone = 'phone'          // phone microphone (no startup-page requirement)
+}
+
+enum AppLocationAccuracy {
+  Low = 'low',             // city-level — cheapest, kindest to battery
+  Medium = 'medium',       // block-level — balanced default
+  High = 'high'            // best available fix — most battery
 }
 
 // ImuReportPace — reporting frequency for IMU sensor data
@@ -447,7 +523,7 @@ enum DeviceModel {
 3. **Container limits** — `containerTotalNum` must be 1–12; `textObject` array max 8 items; `imageObject` array max 4 items.
 4. **Image sends must be serial** — `updateImageRawData` calls must be queued and awaited one at a time; concurrent calls are not supported and will cause errors.
 5. **Image containers are placeholders** — after `createStartUpPageContainer` succeeds, image containers are empty until populated via `updateImageRawData`.
-6. **`audioControl` and `imuControl` require startup to succeed** — these will fail if called before `createStartUpPageContainer` returns `StartUpPageCreateResult.success`.
+6. **Glasses-mic `audioControl` and `imuControl` require startup to succeed** — `audioControl(true, AudioInputSource.Glasses)` and `imuControl` will fail if called before `createStartUpPageContainer` returns `StartUpPageCreateResult.success`. `audioControl(true, AudioInputSource.Phone)`, location APIs, `pickImageFromAlbum`, and `captureImageFromCamera` route through the phone and do not require the startup page.
 7. **Always unsubscribe event listeners on teardown** — `onEvenHubEvent`, `onDeviceStatusChanged`, and `onLaunchSource` all return an unsubscribe function; call it when your component/page is destroyed.
 8. **`onLaunchSource` fires only once** — register the listener early (before or immediately after `waitForEvenAppBridge`) to avoid missing the event.
 
@@ -479,14 +555,17 @@ The companion app (and simulator) push events into the WebView via `window.postM
 // Format 3 — array format [eventType, payload]
 { type: 'listen_even_app_data', method: 'evenHubEvent', data: ['list_event', { /* event payload */ }] }
 
-// Audio event — audioPcm is an array of PCM sample integers
-{ type: 'listen_even_app_data', method: 'evenHubEvent', data: { type: 'audioEvent', jsonData: { audioPcm: [/* numbers */] } } }
+// Audio event — audioPcm is an array of PCM sample integers; source identifies the mic
+{ type: 'listen_even_app_data', method: 'evenHubEvent', data: { type: 'audioEvent', jsonData: { source: 'glasses', audioPcm: [/* numbers */] } } }
 
 // Device status changed
 { type: 'listen_even_app_data', method: 'deviceStatusChanged', data: { sn: 'ABC123', connectType: 'connected', isWearing: true, batteryLevel: 80, isCharging: false } }
 
 // Launch source (fires once on app open)
 { method: 'evenAppLaunchSource', data: { launchSource: 'appMenu' } }
+
+// App location changed (pushed continuously after startAppLocationUpdates)
+{ method: 'appLocationChanged', data: { latitude: 37.7749, longitude: -122.4194, accuracy: 5, timestamp: 1750000000000 } }
 ```
 
 ---
