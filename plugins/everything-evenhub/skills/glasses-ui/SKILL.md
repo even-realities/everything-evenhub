@@ -74,6 +74,7 @@ Text containers display scrollable or static text content.
 | `borderRadius` | number | 0–10 | Rounded corners |
 | `paddingLength` | number | 0–32 | Uniform padding |
 | `content` | string | — | Text to display |
+| `textColor` | number | 0–4 | Text **brightness**, not colour (SDK 0.0.14+). Omit on create/rebuild = device default 4 |
 
 **Content limits:**
 - `createStartUpPageContainer`: max **1000 characters**
@@ -167,7 +168,7 @@ rebuildPageContainer(container: RebuildPageContainer): Promise<boolean>
 
 ### `textContainerUpgrade(container)`
 
-Updates text content in-place without rebuilding the page. Flicker-free.
+Updates text content in-place without rebuilding the page. Flicker-free. Accepts an optional `textColor` (brightness 0–4, SDK 0.0.14+); omitting it keeps the container's current brightness.
 
 ```typescript
 textContainerUpgrade(container: TextContainerUpgrade): Promise<boolean>
@@ -251,6 +252,30 @@ Rules:
 - **Don't add your own exit item.** Exit is a system slot, and the root-page double-tap contract is unchanged.
 
 Selections arrive as `event.menuItemClickEvent` — see the `handle-input` skill.
+
+## Text Brightness (SDK 0.0.14+)
+
+Text containers take an optional `textColor` — **five brightness levels, `0` to `4`**. Despite the field name there is no colour: the display is monochrome green, and `textColor` sets how bright the glyphs burn. Text containers only.
+
+| Context | Omitting it means |
+|---|---|
+| `createStartUpPageContainer` / `rebuildPageContainer` | Device default, level **4** (brightest) |
+| `textContainerUpgrade` | Keep the container's **current** brightness |
+
+```typescript
+// Heading at full brightness, secondary line dimmed
+textObject: [
+  { containerID: 1, containerName: 'title',   content: 'Now Playing', textColor: 4, isEventCapture: 1,
+    xPosition: 0, yPosition: 0, width: 576, height: 64 },
+  { containerID: 2, containerName: 'caption', content: 'Updated 3 min ago', textColor: 2, isEventCapture: 0,
+    xPosition: 0, yPosition: 72, width: 576, height: 48 },
+]
+```
+
+- **`textColor` is 0–4; `borderColor` is 0–15.** Different scales on the same container — don't reuse a greyscale index as a brightness level.
+- **Level `0` is the dimmest level, not "unset".** `textColor: 0` may render effectively invisible; verify on hardware before relying on it.
+- Out-of-range values fail SDK-side validation (`INVALID_TEXT_BRIGHTNESS`) and never reach the glasses.
+- Use brightness for **hierarchy** — a dim caption under a bright heading — not for decoration. Two levels apart reads clearly; adjacent levels barely differ.
 
 ## Best Practices
 

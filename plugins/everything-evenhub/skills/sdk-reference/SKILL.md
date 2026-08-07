@@ -116,6 +116,7 @@ class TextContainerProperty {
   isEventCapture?: number   // 0 or 1; exactly one container per page must be 1
   zOrderIndex?: number      // stacking order, larger = front; all-or-nothing per page (0.0.12+, see Z-Order Rules)
   content?: string          // initial text content, max 1000 characters
+  textColor?: number        // text BRIGHTNESS 0–4, not a colour; omit = device default 4 (0.0.14+)
 }
 ```
 
@@ -181,7 +182,38 @@ class TextContainerUpgrade {
   contentOffset?: number    // character offset to begin writing
   contentLength?: number    // number of characters to replace
   content?: string          // replacement text, max 2000 characters total
+  textColor?: number        // text BRIGHTNESS 0–4; omit = keep current brightness (0.0.14+)
 }
+```
+
+### Text Brightness (`textColor`, 0.0.14+)
+
+Five brightness levels, `0`–`4`. **Despite the field name there is no colour** — the display is monochrome green and `textColor` sets how bright the glyphs burn. Text containers only; list and image containers have no equivalent.
+
+| Context | Omitting it means |
+|---|---|
+| `createStartUpPageContainer` / `rebuildPageContainer` | Device default, level **4** (brightest) |
+| `textContainerUpgrade` | Keep the container's **current** brightness |
+
+```typescript
+await bridge.textContainerUpgrade({
+  containerID: 2,
+  containerName: 'caption',
+  content: 'Updated 3 min ago',
+  textColor: 2,          // dimmer than the level-4 heading above it
+})
+```
+
+- **`textColor` is 0–4; `borderColor` is 0–15.** Different scales on the same container — don't reuse a greyscale index as a brightness level.
+- **Level `0` is the dimmest level, not "unset".** The SDK accepts it, so `textColor: 0` may render effectively invisible. Verify on hardware before relying on it.
+- Out-of-range values fail SDK-side validation with `INVALID_TEXT_BRIGHTNESS` and never reach the host — `textContainerUpgrade` intercepts them locally too.
+
+```typescript
+const MIN_TEXT_BRIGHTNESS = 0
+const MAX_TEXT_BRIGHTNESS = 4
+
+function isValidTextBrightness(value: unknown): value is number
+function validateEvenHubPageContainerTextBrightness(container: EvenHubPageContainerLike): EvenHubPageContainerValidationResult
 ```
 
 ### `ImageRawDataUpdate`
@@ -317,7 +349,8 @@ enum EvenHubPageContainerValidationErrorCode {
   InvalidMenuItemID = 'INVALID_MENU_ITEM_ID',      // itemID is 0, negative, or outside uint32
   DuplicateMenuItemID = 'DUPLICATE_MENU_ITEM_ID',  // same itemID twice
   InvalidMenuItemName = 'INVALID_MENU_ITEM_NAME',  // itemName over 32 UTF-8 bytes
-  InvalidMenuPosition = 'INVALID_MENU_POSITION'    // position outside 0..menuItems.length
+  InvalidMenuPosition = 'INVALID_MENU_POSITION',   // position outside 0..menuItems.length
+  InvalidTextBrightness = 'INVALID_TEXT_BRIGHTNESS' // textColor outside 0..4
 }
 
 // Menu-only check, or the combined check that also covers z-order:

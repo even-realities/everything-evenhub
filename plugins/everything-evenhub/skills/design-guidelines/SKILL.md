@@ -46,6 +46,16 @@ argument-hint: [design question or task]
 | Page flipping | Pre-paginate text at ~400-500 char boundaries, rebuild on scroll events |
 | "Centering" text | Manually pad with spaces (no text alignment support) |
 
+## Text Brightness (SDK 0.0.14+)
+
+Text containers take `textColor` — five **brightness** levels `0`–`4`, not colours. The display is monochrome green; this controls how bright the glyphs burn.
+
+- **Use it for hierarchy, not decoration.** A level-4 heading over a level-2 caption reads instantly. Alternating levels for their own sake just looks noisy.
+- **Two levels apart minimum.** Adjacent levels barely differ on hardware.
+- **Level 4 is the default** — you get it by omitting the field. Only reach for `textColor` when something should recede.
+- **Level 0 is the dimmest level, not "off"**, and may be effectively invisible. Don't ship a design that depends on it without checking hardware.
+- **Don't confuse it with `borderColor`** (0–15 greyscale). Different scales, same container.
+
 ## Contextual Menu Labels (SDK 0.0.14+)
 
 Items your app adds to the glasses contextual menu render one per line, unwrapped, between the system Display off and Exit slots.
