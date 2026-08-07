@@ -163,6 +163,7 @@ rebuildPageContainer(container: RebuildPageContainer): Promise<boolean>
 - Returns `true` on success
 - Causes a **brief flicker on hardware** (full redraw)
 - Text content limit: 1000 characters per text container
+- **Omitting `menuObject` clears the contextual menu** (SDK 0.0.14+) — see below
 
 ### `textContainerUpgrade(container)`
 
@@ -209,6 +210,47 @@ shutDownPageContainer(exitMode?: number): Promise<boolean>
 
 - `exitMode: 0` — immediate exit with no confirmation
 - `exitMode: 1` — show exit confirmation dialog
+
+## Contextual Menu (SDK 0.0.14+)
+
+Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on a long press. Below 2.2.9 the declaration is a silent no-op.
+
+The OS owns the frame. Your items sit between two permanent system slots — **Display off** (top) and **Exit** (bottom) — neither reachable from the SDK. Declare nothing and the user still gets those two.
+
+```typescript
+await bridge.createStartUpPageContainer({
+  containerTotalNum: 1,
+  textObject: [{
+    xPosition: 0, yPosition: 0, width: 576, height: 288,
+    containerID: 1, containerName: 'main',
+    content: 'Timer running',
+    isEventCapture: 1,
+  }],
+  menuObject: {
+    menuItems: [
+      { itemName: 'Restart', itemID: 1, position: 0 },
+      { itemName: 'Recenter', itemID: 2, position: 0 },
+    ],
+  },
+})
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `itemName` | string | Label the OS renders. Max **32 UTF-8 bytes** — ASCII gets 32, CJK caps near 10 |
+| `itemID` | number | Non-zero uint32, unique across the menu. Comes back on the click event |
+| `position` | number | `0` keeps payload order; `1..N` requests an absolute slot among your items |
+
+Rules:
+
+- **Max 10 items.** Exceeding it fails SDK-side validation (`TOO_MANY_MENU_ITEMS`) and the page never reaches the glasses.
+- **`itemID` cannot be `0`** — zero is reserved by the protocol. Start at `1`.
+- **Fire-and-forget only.** One event per selection, then the menu closes. The glasses never re-render item labels, so an item reading `Status: high` still reads `Status: high` after your handler changes the value. Re-declare the menu to change a label, and write labels as verbs (`Restart`, `Skip`, `Mute`) so it rarely matters.
+- **Replaced wholesale on rebuild, never merged.** A `rebuildPageContainer` that drops `menuObject` because the layout changed also drops the menu — re-send it on every rebuild that should keep it.
+- **Keep labels short and don't duplicate the page.** The OS renders one line per slot with no wrapping; the menu is for what the current screen can't reach.
+- **Don't add your own exit item.** Exit is a system slot, and the root-page double-tap contract is unchanged.
+
+Selections arrive as `event.menuItemClickEvent` — see the `handle-input` skill.
 
 ## Best Practices
 

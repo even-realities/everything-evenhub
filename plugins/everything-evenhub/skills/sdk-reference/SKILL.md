@@ -25,7 +25,9 @@ Your app is a standard HTML + TypeScript web page running inside a Flutter WebVi
 npm install @evenrealities/even_hub_sdk
 ```
 
-Current version: **0.0.12**
+Current version: **0.0.14**
+
+The contextual menu and the long-press event pair need SDK `0.0.14` **and** Even App `2.2.9`. Everything else runs on `2.2.6`.
 
 ---
 
@@ -78,7 +80,7 @@ const bridge = EvenAppBridge.getInstance()
 | `bridge.shutDownPageContainer(exitMode?)` | `Promise<boolean>` | Close the app. exitMode 0=exit immediately, 1=show confirmation dialog |
 | `bridge.onLaunchSource(cb)` | `() => void` | Subscribe to launch source event. Fires exactly once: `'appMenu'` or `'glassesMenu'`. Returns unsubscribe function. |
 | `bridge.onDeviceStatusChanged(cb)` | `() => void` | Subscribe to device status updates (connect type, battery, wearing, charging). Returns unsubscribe function. |
-| `bridge.onEvenHubEvent(cb)` | `() => void` | Subscribe to all hub events: listEvent, textEvent, sysEvent, audioEvent. Returns unsubscribe function. |
+| `bridge.onEvenHubEvent(cb)` | `() => void` | Subscribe to all hub events: listEvent, textEvent, sysEvent, audioEvent, menuItemClickEvent. Returns unsubscribe function. |
 | `bridge.audioControl(isOpen, source?)` | `Promise<boolean>` | Open (`true`) or close (`false`) the microphone. `source` is an `AudioInputSource` value — `Glasses` (default, G2 four-mic array) or `Phone` (phone mic). Audio delivered as PCM via `audioEvent` with the `source` field set. |
 | `bridge.imuControl(isOpen, reportFrq?)` | `Promise<boolean>` | Enable/disable IMU sensor. `reportFrq` is an `ImuReportPace` value (P100–P1000). |
 | `bridge.getAppLocation(options?)` | `Promise<AppLocation \| null>` | One-shot location read. `options` accepts `accuracy`, `timeoutMs`. Returns `null` if no fix in time, permission denied, or invalid coords. |
@@ -207,6 +209,7 @@ class CreateStartUpPageContainer {
   listObject?: ListContainerProperty[]          // list containers
   textObject?: TextContainerProperty[]          // text containers, max 8
   imageObject?: ImageContainerProperty[]        // image containers, max 4
+  menuObject?: MenuContainerProperty            // contextual menu, max 10 items (0.0.14+)
 }
 ```
 
@@ -220,6 +223,7 @@ class RebuildPageContainer {
   listObject?: ListContainerProperty[]          // list containers
   textObject?: TextContainerProperty[]          // text containers, max 8
   imageObject?: ImageContainerProperty[]        // image containers, max 4
+  menuObject?: MenuContainerProperty            // omitting this CLEARS the menu (0.0.14+)
 }
 ```
 
@@ -245,6 +249,80 @@ function validateEvenHubPageContainerZOrder(container: EvenHubPageContainerLike)
 
 // Human-readable message for an invalid result:
 function formatEvenHubPageContainerValidationError(result): string
+```
+
+### Contextual Menu (0.0.14+)
+
+Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on a long press.
+
+```typescript
+class MenuContainerProperty {
+  menuItems?: MenuItemProperty[]   // max 10
+}
+
+class MenuItemProperty {
+  itemName?: string    // label; max 32 UTF-8 BYTES (not characters)
+  itemID?: number      // non-zero uint32, unique across the menu; comes back on click
+  position?: number    // 0 = payload order; 1..N = absolute slot among your items
+}
+
+class MenuItemClickEvent {
+  itemID?: number      // the itemID you assigned
+}
+```
+
+Menu structure:
+
+| Slot | Owner |
+|---|---|
+| **Display off** (top) | System — always present, not reachable from the SDK |
+| Your action items | Your app — up to 10 |
+| **Exit** (bottom) | System — always present, not reachable from the SDK |
+
+```typescript
+await bridge.createStartUpPageContainer({
+  containerTotalNum: 1,
+  textObject: [/* ... */],
+  menuObject: {
+    menuItems: [
+      { itemName: 'Restart', itemID: 1, position: 0 },
+      { itemName: 'Recenter', itemID: 2, position: 0 },
+    ],
+  },
+})
+
+bridge.onEvenHubEvent(event => {
+  const click = event.menuItemClickEvent
+  if (!click) return
+  if (click.itemID === 1) restart()
+  if (click.itemID === 2) recenter()
+})
+```
+
+Rules:
+
+- **Fire-and-forget only.** Selecting an item sends one event and closes the menu. The glasses never re-render item labels, so an item reading `Status: high` still reads `Status: high` after your handler changes the value. Re-declare the menu to change a label. Write labels as verbs (`Restart`, `Skip`, `Mute`), not state readouts.
+- **`menuObject` is replaced wholesale, never merged.** A `rebuildPageContainer` that omits it **clears** the menu — carry it forward on every rebuild that should keep it.
+- **`itemID` cannot be `0`.** Zero is reserved by the protocol; start at `1`.
+- **`itemName` is capped in UTF-8 bytes, not characters.** ASCII gets 32; CJK is 3 bytes per glyph, so a Chinese label caps near 10.
+- **Menu clicks ignore `isEventCapture`.** `menuItemClickEvent` is its own top-level field on `EvenHubEvent`, independent of list/text container routing.
+- **Silent no-op below Even App 2.2.9.** The page still renders and the user still gets Display off + Exit; your items just never appear.
+
+Validation runs SDK-side before the payload reaches native, same failure mode as z-order (`createStartUpPageContainer` returns `invalid`, `rebuildPageContainer` returns `false`):
+
+```typescript
+enum EvenHubPageContainerValidationErrorCode {
+  // ...z-order codes above, plus:
+  TooManyMenuItems = 'TOO_MANY_MENU_ITEMS',        // more than 10 items
+  InvalidMenuItemID = 'INVALID_MENU_ITEM_ID',      // itemID is 0, negative, or outside uint32
+  DuplicateMenuItemID = 'DUPLICATE_MENU_ITEM_ID',  // same itemID twice
+  InvalidMenuItemName = 'INVALID_MENU_ITEM_NAME',  // itemName over 32 UTF-8 bytes
+  InvalidMenuPosition = 'INVALID_MENU_POSITION'    // position outside 0..menuItems.length
+}
+
+// Menu-only check, or the combined check that also covers z-order:
+function validateEvenHubPageContainerMenu(container: EvenHubPageContainerLike): EvenHubPageContainerValidationResult
+function validateEvenHubPageContainer(container: EvenHubPageContainerLike): EvenHubPageContainerValidationResult
 ```
 
 ### `UserInfo`
@@ -349,7 +427,8 @@ interface EvenHubEvent {
   textEvent?: Text_ItemEvent
   sysEvent?: Sys_ItemEvent
   audioEvent?: AudioEventPayload
-  jsonData?: Record<string, any>     // raw payload passthrough
+  menuItemClickEvent?: MenuItemClickEvent   // contextual menu selection (0.0.14+)
+  jsonData?: Record<string, any>            // raw payload passthrough
 }
 ```
 
@@ -435,7 +514,9 @@ enum OsEventTypeList {
   FOREGROUND_EXIT_EVENT = 5,
   ABNORMAL_EXIT_EVENT = 6,
   SYSTEM_EXIT_EVENT = 7,
-  IMU_DATA_REPORT = 8
+  IMU_DATA_REPORT = 8,
+  LONG_PRESS_EVENT = 9,          // 0.0.14+, Even App 2.2.9+
+  LONG_PRESS_RELEASE_EVENT = 10  // 0.0.14+, Even App 2.2.9+
 }
 
 enum DeviceConnectType {
@@ -550,12 +631,13 @@ enum DeviceModel {
 1. **`createStartUpPageContainer` is one-shot** — call it exactly once at startup; calling it again will not work. Use `rebuildPageContainer` for subsequent full redraws.
 2. **Exactly one container must have `isEventCapture: 1`** — this designates which container receives user input. Having zero or more than one causes undefined behavior.
 3. **`zOrderIndex` is all-or-nothing per page (0.0.12+)** — if any container sets it, every list/text/image container on that page must set a unique value; larger renders in front. Violations fail SDK-side validation: `createStartUpPageContainer` returns `invalid`, `rebuildPageContainer` returns `false`.
-4. **Container limits** — `containerTotalNum` must be 1–12; `textObject` array max 8 items; `imageObject` array max 4 items.
-5. **Image sends must be serial** — `updateImageRawData` calls must be queued and awaited one at a time; concurrent calls are not supported and will cause errors.
-6. **Image containers are placeholders** — after `createStartUpPageContainer` succeeds, image containers are empty until populated via `updateImageRawData`.
-7. **Glasses-mic `audioControl` and `imuControl` require startup to succeed** — `audioControl(true, AudioInputSource.Glasses)` and `imuControl` will fail if called before `createStartUpPageContainer` returns `StartUpPageCreateResult.success`. `audioControl(true, AudioInputSource.Phone)`, location APIs, `pickImageFromAlbum`, and `captureImageFromCamera` route through the phone and do not require the startup page.
-8. **Always unsubscribe event listeners on teardown** — `onEvenHubEvent`, `onDeviceStatusChanged`, and `onLaunchSource` all return an unsubscribe function; call it when your component/page is destroyed.
-9. **`onLaunchSource` fires only once** — register the listener early (before or immediately after `waitForEvenAppBridge`) to avoid missing the event.
+4. **Container limits** — `containerTotalNum` must be 1–12; `textObject` array max 8 items; `imageObject` array max 4 items; `menuObject.menuItems` max 10 items.
+5. **`menuObject` clears on omission (0.0.14+)** — `rebuildPageContainer` replaces the menu wholesale. Leaving `menuObject` out of a rebuild removes your items rather than preserving them; re-send it every time.
+6. **Image sends must be serial** — `updateImageRawData` calls must be queued and awaited one at a time; concurrent calls are not supported and will cause errors.
+7. **Image containers are placeholders** — after `createStartUpPageContainer` succeeds, image containers are empty until populated via `updateImageRawData`.
+8. **Glasses-mic `audioControl` and `imuControl` require startup to succeed** — `audioControl(true, AudioInputSource.Glasses)` and `imuControl` will fail if called before `createStartUpPageContainer` returns `StartUpPageCreateResult.success`. `audioControl(true, AudioInputSource.Phone)`, location APIs, `pickImageFromAlbum`, and `captureImageFromCamera` route through the phone and do not require the startup page.
+9. **Always unsubscribe event listeners on teardown** — `onEvenHubEvent`, `onDeviceStatusChanged`, and `onLaunchSource` all return an unsubscribe function; call it when your component/page is destroyed.
+10. **`onLaunchSource` fires only once** — register the listener early (before or immediately after `waitForEvenAppBridge`) to avoid missing the event.
 
 ---
 

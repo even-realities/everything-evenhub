@@ -65,7 +65,7 @@ Every field is required unless noted. Validate each field before running `evenhu
 | `name` | string | yes | Maximum 20 characters. |
 | `version` | string | yes | Semver format `x.y.z` — three numeric parts separated by dots (e.g. `"1.0.0"`). No `v` prefix, no pre-release suffixes. |
 | `min_app_version` | string | yes | Minimum Even Hub app version required. E.g. `"2.0.0"`. |
-| `min_sdk_version` | string | yes | Minimum SDK version required. Match the SDK version you build against (currently `"0.0.12"`). |
+| `min_sdk_version` | string | yes | Minimum SDK version required. Match the SDK version you build against (currently `"0.0.14"`). |
 | `entrypoint` | string | yes | Path to the entry HTML/JS file, relative to the build output folder. The file must exist inside the build output after `npm run build`. |
 | `permissions` | array | yes | Array of permission objects (see Permissions Reference). Can be empty `[]`. Must NOT be a key-value map. |
 | `supported_languages` | array | yes | Array of BCP 47 language codes from the supported set. Valid values: `en`, `de`, `fr`, `es`, `it`, `zh`, `ja`, `ko`. |
@@ -79,7 +79,7 @@ Every field is required unless noted. Validate each field before running `evenhu
   "name": "Weather Now",
   "version": "1.0.0",
   "min_app_version": "2.0.0",
-  "min_sdk_version": "0.0.12",
+  "min_sdk_version": "0.0.14",
   "entrypoint": "index.html",
   "permissions": [],
   "supported_languages": ["en"]
@@ -201,7 +201,7 @@ npx evenhub pack <app.json> <build-folder> [options]
 | `name: must be 20 characters or fewer` | Shorten the `name` value in `app.json` to 20 characters or fewer. |
 | `version: must be in x.y.z format` | Use a three-part numeric semver string such as `"1.0.0"`. Do not use `"1.0"`, `"v1.0.0"`, or pre-release tags. |
 | `min_app_version: expected string, received undefined` | `min_app_version` is required. Add it to `app.json` (e.g. `"2.0.0"`). |
-| `min_sdk_version: expected string, received undefined` | `min_sdk_version` is required. Add it to `app.json` (e.g. `"0.0.12"`). |
+| `min_sdk_version: expected string, received undefined` | `min_sdk_version` is required. Add it to `app.json` (e.g. `"0.0.14"`). |
 | `permissions: each permission must be an object with name and desc keys` | `permissions` must be an array of objects, each with `name` and `desc`. See the Permissions Reference above. |
 | `supported_languages: invalid language` | Use only the supported lowercase ISO codes: `en`, `de`, `fr`, `es`, `it`, `zh`, `ja`, `ko`. |
 | `Entrypoint file not found` | Ensure `entrypoint` in `app.json` points to a file that exists inside the build output folder after running `npm run build`. |

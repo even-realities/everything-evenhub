@@ -46,6 +46,16 @@ argument-hint: [design question or task]
 | Page flipping | Pre-paginate text at ~400-500 char boundaries, rebuild on scroll events |
 | "Centering" text | Manually pad with spaces (no text alignment support) |
 
+## Contextual Menu Labels (SDK 0.0.14+)
+
+Items your app adds to the glasses contextual menu render one per line, unwrapped, between the system Display off and Exit slots.
+
+- **32 UTF-8 bytes per label, not 32 characters.** ASCII gets 32; CJK is 3 bytes per glyph, so a Chinese label caps near 10. Over the limit fails SDK validation.
+- **Verbs, not state readouts.** Selection is fire-and-forget and the glasses never re-render a label, so `Status: high` goes stale the moment the handler runs. `Restart`, `Skip`, `Mute` never do.
+- **Under ~16 ASCII characters** reads cleanly at a glance.
+- **10 items is the ceiling, not the target.** Past five or six, the user scrolls further than they would have tapped.
+- **Don't mirror the page.** The menu is for what the current screen can't reach.
+
 ## Icon Design Principles
 
 - **Design at native resolution** — work at actual pixel size (e.g., 24x24). Avoid designing large and scaling down.
