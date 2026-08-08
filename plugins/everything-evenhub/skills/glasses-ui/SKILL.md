@@ -216,7 +216,7 @@ shutDownPageContainer(exitMode?: number): Promise<boolean>
 
 Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on a long press. Below 2.2.9 the declaration is a silent no-op.
 
-The OS owns the frame. Your items sit between two permanent system slots — **Display off** (top) and **Exit** (bottom) — neither reachable from the SDK. Declare nothing and the user still gets those two.
+The OS owns the frame. Your items sit between permanent system slots — **Display off** (top), **Brightness**, and **Exit** (bottom) — none of them reachable from the SDK. Declare nothing and the user still gets those. The system set can grow between firmware releases, so never count screen rows; `position` indexes your own items only.
 
 ```typescript
 await bridge.createStartUpPageContainer({

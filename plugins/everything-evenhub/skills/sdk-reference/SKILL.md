@@ -308,8 +308,11 @@ Menu structure:
 | Slot | Owner |
 |---|---|
 | **Display off** (top) | System — always present, not reachable from the SDK |
+| **Brightness** | System — always present, handled end to end by the OS |
 | Your action items | Your app — up to 10 |
 | **Exit** (bottom) | System — always present, not reachable from the SDK |
+
+The system set can grow between firmware releases and none of it is visible to the SDK. Never count screen rows — `position` indexes your own items only.
 
 ```typescript
 await bridge.createStartUpPageContainer({
@@ -338,7 +341,7 @@ Rules:
 - **`itemID` cannot be `0`.** Zero is reserved by the protocol; start at `1`.
 - **`itemName` is capped in UTF-8 bytes, not characters.** ASCII gets 32; CJK is 3 bytes per glyph, so a Chinese label caps near 10.
 - **Menu clicks ignore `isEventCapture`.** `menuItemClickEvent` is its own top-level field on `EvenHubEvent`, independent of list/text container routing.
-- **Silent no-op below Even App 2.2.9.** The page still renders and the user still gets Display off + Exit; your items just never appear.
+- **Silent no-op below Even App 2.2.9.** The page still renders and the user still gets the system items; your items just never appear.
 
 Validation runs SDK-side before the payload reaches native, same failure mode as z-order (`createStartUpPageContainer` returns `invalid`, `rebuildPageContainer` returns `false`):
 
