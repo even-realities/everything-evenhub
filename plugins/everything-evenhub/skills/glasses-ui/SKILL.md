@@ -216,7 +216,7 @@ shutDownPageContainer(exitMode?: number): Promise<boolean>
 
 Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on a long press. Below 2.2.9 the declaration is a silent no-op.
 
-The OS owns the frame. Your items sit between permanent system slots — **Display off** (top), **Brightness**, and **Exit** (bottom) — none of them reachable from the SDK. Declare nothing and the user still gets those. The system set can grow between firmware releases, so never count screen rows; `position` indexes your own items only.
+The OS owns the frame. Your items sit between permanent system slots — **Display off** (top), **Brightness**, and **Close [app name]** (bottom, renders the app's name) — none of them reachable from the SDK. Declare nothing and the user still gets those. The system set can grow between firmware releases, so never count screen rows; `position` indexes your own items only.
 
 ```typescript
 await bridge.createStartUpPageContainer({
@@ -249,7 +249,7 @@ Rules:
 - **Fire-and-forget only.** One event per selection, then the menu closes. The glasses never re-render item labels, so an item reading `Status: high` still reads `Status: high` after your handler changes the value. Re-declare the menu to change a label, and write labels as verbs (`Restart`, `Skip`, `Mute`) so it rarely matters.
 - **Replaced wholesale on rebuild, never merged.** A `rebuildPageContainer` that drops `menuObject` because the layout changed also drops the menu — re-send it on every rebuild that should keep it.
 - **Keep labels short and don't duplicate the page.** The OS renders one line per slot with no wrapping; the menu is for what the current screen can't reach.
-- **Don't add your own exit item.** Exit is a system slot, and the root-page double-tap contract is unchanged.
+- **Don't add your own exit item.** Close is a system slot, and the root-page double-tap contract is unchanged.
 
 Selections arrive as `event.menuItemClickEvent` — see the `handle-input` skill.
 

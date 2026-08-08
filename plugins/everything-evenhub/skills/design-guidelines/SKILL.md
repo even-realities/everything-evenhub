@@ -58,7 +58,7 @@ Text containers take `textColor` — five **brightness** levels `0`–`4`, not c
 
 ## Contextual Menu Labels (SDK 0.0.14+)
 
-Items your app adds to the glasses contextual menu render one per line, unwrapped, between the system slots (Display off, Brightness, Exit).
+Items your app adds to the glasses contextual menu render one per line, unwrapped, between the system slots (Display off, Brightness, Close).
 
 - **32 UTF-8 bytes per label, not 32 characters.** ASCII gets 32; CJK is 3 bytes per glyph, so a Chinese label caps near 10. Over the limit fails SDK validation.
 - **Verbs, not state readouts.** Selection is fire-and-forget and the glasses never re-render a label, so `Status: high` goes stale the moment the handler runs. `Restart`, `Skip`, `Mute` never do.

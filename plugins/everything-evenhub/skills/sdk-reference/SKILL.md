@@ -310,7 +310,7 @@ Menu structure:
 | **Display off** (top) | System — always present, not reachable from the SDK |
 | **Brightness** | System — always present, handled end to end by the OS |
 | Your action items | Your app — up to 10 |
-| **Exit** (bottom) | System — always present, not reachable from the SDK |
+| **Close [app name]** (bottom) | System — always present, not reachable from the SDK. Renders the app's name, e.g. `Close Timer` |
 
 The system set can grow between firmware releases and none of it is visible to the SDK. Never count screen rows — `position` indexes your own items only.
 
