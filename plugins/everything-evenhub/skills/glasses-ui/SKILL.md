@@ -283,6 +283,7 @@ textObject: [
 - **Use `rebuildPageContainer` when changing layout** — adding or removing containers, switching container types, or updating list items
 - **Always match `containerID` and `containerName` exactly** when calling `textContainerUpgrade` — mismatches silently fail
 - **Do not call `updateImageRawData` concurrently** — queue updates and await each before sending the next
+- **Image sends are paced at 100ms (0.0.14+)** — each send holds the image path for 100ms; calls inside that window are held and flushed on the next one, so nothing is dropped and nothing arrives early. It is a floor, not a frame budget — a frame still costs far longer over BLE. Await the `ImageRawDataUpdateResult`, but read it as a call result, not a delivery receipt from the glasses
 - **Pre-paginate long text** at ~400–500 character boundaries and use `rebuildPageContainer` on scroll events
 - **Image frames cost ~0.5s to ~2s each over BLE** — SDK 0.0.12+ LZ4-compresses raw data internally, which shortens transfers, but there is no delta encoding; design turn-based and avoid loops that assume multi-FPS
 - **Text updates are much faster than image updates** — use text for anything that needs to feel instant; let image containers catch up on their own

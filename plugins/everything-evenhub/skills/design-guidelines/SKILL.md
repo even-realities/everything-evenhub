@@ -90,6 +90,7 @@ Full supported glyph tables: https://github.com/nickustinov/even-g2-notes
 - **4-bit greyscale**
 - Placeholder on creation — must call `updateImageRawData` to display content
 - **No concurrent image sends** — wait for each to complete
+- **Paced at 100ms (SDK 0.0.14+)** — each send holds the image path for 100ms; faster calls are held and flushed on the next window rather than dropped. A floor, not a frame budget — a frame still costs far longer over BLE
 - Use simple/flat colors; glasses have limited memory
 
 ## Phone-Side App UI (Flutter WebView host)
@@ -138,6 +139,7 @@ https://www.figma.com/design/X82y5uJvqMH95jgOfmV34j/Even-Realities---Software-De
 
 - **even-g2-notes** (GitHub: https://github.com/nickustinov/even-g2-notes) — architecture deep-dives, full Unicode glyph tables, SDK quirks, error codes, reference implementations: chess, reddit reader, weather, Tesla vehicle status, pong, snake
 - **even-toolkit** (GitHub: https://github.com/fabioglimb/even-toolkit, npm: `even-toolkit`) — 55+ React components, 191 pixel-art icons, design tokens, glasses SDK bridge utilities (useGlasses hook, buildActionBar, mapGlassEvent, canvas renderer, PNG utils, pagination helpers)
+- **ER Studio** (GitHub: https://github.com/gabrielevierti/er-studio/releases) — community IDE wrapping the official toolchain: Monaco editor with TypeScript IntelliSense, template scaffolding, one-click run (Vite + simulator) and pack (`.ehpk`), live simulator framebuffer mirror, gesture input pad, console, and an environment DOCTOR panel. macOS Apple Silicon builds; Intel builds from source
 - **Discord**: https://discord.gg/Y4jHMCU4sv — developer community for support, bug reports, discussion
 
 ## Task
