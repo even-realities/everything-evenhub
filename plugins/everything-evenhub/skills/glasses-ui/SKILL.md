@@ -214,7 +214,7 @@ shutDownPageContainer(exitMode?: number): Promise<boolean>
 
 ## Contextual Menu (SDK 0.0.14+)
 
-Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on a long press. Below 2.2.9 the declaration is a silent no-op.
+Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on tap then long press. Below 2.2.9 the declaration is a silent no-op.
 
 The OS owns the frame. Your items sit between permanent system slots — **Display off** (top), **Brightness**, and **Close [app name]** (bottom, renders the app's name) — none of them reachable from the SDK. Declare nothing and the user still gets those. The system set can grow between firmware releases, so never count screen rows; `position` indexes your own items only.
 

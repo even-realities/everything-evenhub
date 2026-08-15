@@ -132,7 +132,7 @@ Actions map to the glasses touchpad:
 - `click` — select the current item
 - `double_click` — triggers a system-level double-click event (typically "back" or "dismiss")
 
-There is **no long-press action**, and the simulator does not render the contextual menu (SDK 0.0.14+). Neither can be exercised from this API — cover them on real hardware.
+There is **no tap-then-long-press action**, and the simulator does not render the contextual menu (SDK 0.0.14+). Neither can be exercised from this API — cover them on real hardware.
 
 ## Automation workflow
 

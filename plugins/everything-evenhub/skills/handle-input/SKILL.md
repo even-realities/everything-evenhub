@@ -1,6 +1,6 @@
 ---
 name: handle-input
-description: Handle user input and events in Even Hub G2 apps — touchpad gestures, ring input, long press, contextual-menu selections, scroll, foreground/background lifecycle, and event routing. Use when implementing user interaction or event handling.
+description: Handle user input and events in Even Hub G2 apps — touchpad gestures, ring input, tap then long press, contextual-menu selections, scroll, foreground/background lifecycle, and event routing. Use when implementing user interaction or event handling.
 allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [input handling task]
 ---
@@ -13,8 +13,8 @@ Guide for handling user input, gestures, and lifecycle events in Even Hub G2 app
 
 | Source | Gestures | Notes |
 |--------|----------|-------|
-| G2 touchpads (temple) | Press, double press, swipe up, swipe down, long press + release | Primary input |
-| R1 touchpads (ring) | Press, double press, swipe up, swipe down, long press + release | Optional accessory, same gesture set |
+| G2 touchpads (temple) | Press, double press, swipe up, swipe down, tap then long press + release | Primary input |
+| R1 touchpads (ring) | Press, double press, swipe up, swipe down, tap then long press + release | Optional accessory, same gesture set |
 | IMU (accelerometer/gyroscope) | Head orientation, motion data | See device-features skill |
 
 ## Event Routing Rules
@@ -62,12 +62,12 @@ Events route differently depending on the **active container type** (the one wit
 | 6 | ABNORMAL_EXIT_EVENT | Unexpected disconnect |
 | 7 | SYSTEM_EXIT_EVENT | System-level exit (e.g. user confirmed exit dialog) |
 | 8 | IMU_DATA_REPORT | IMU data sample |
-| 9 | LONG_PRESS_EVENT | Sustained press begins (SDK 0.0.14+, Even App 2.2.9+) |
+| 9 | LONG_PRESS_EVENT | Tap then long press begins (SDK 0.0.14+, Even App 2.2.9+) |
 | 10 | LONG_PRESS_RELEASE_EVENT | That press is released (SDK 0.0.14+, Even App 2.2.9+) |
 
-## Long Press (SDK 0.0.14+)
+## Tap Then Long Press (SDK 0.0.14+)
 
-Requires SDK `0.0.14` and Even App `2.2.9`. A sustained press fires **two** events — one when the press starts, one when the finger lifts. They are ordinary list/text/sys events with the same routing and `eventSource` as any other gesture; no separate subscription.
+Requires SDK `0.0.14` and Even App `2.2.9`. **Tap then long press** is the canonical name for this gesture — never "long press", "tap and hold", or "press and hold" in prose; the SDK event names keep the older `LONG_PRESS` spelling. It fires **two** events — one when the press starts, one when the finger lifts. They are ordinary list/text/sys events with the same routing and `eventSource` as any other gesture; no separate subscription.
 
 ```typescript
 let pressStartedAt = 0
@@ -86,9 +86,9 @@ bridge.onEvenHubEvent(event => {
 
 **The pair is not guaranteed.** If the app backgrounds or the page rebuilds between the two, the release never lands. Never leave state that only a release can clear — reset it in the `FOREGROUND_EXIT_EVENT` (5) handler too.
 
-**The OS uses long press for its own contextual menu.** Whether the gesture reaches your app depends on which layer owns the press, so treat long press as an enhancement rather than the only path to a feature.
+**The OS uses tap then long press for its own contextual menu.** Whether the gesture reaches your app depends on which layer owns the press, so treat it as an enhancement rather than the only path to a feature.
 
-**Below Even App 2.2.9 these events never fire.** Any flow gated behind long press needs a tap-reachable fallback if your app supports older app versions.
+**Below Even App 2.2.9 these events never fire.** Any flow gated behind tap then long press needs a tap-reachable fallback if your app supports older app versions.
 
 ## Contextual Menu Selections (SDK 0.0.14+)
 
@@ -195,9 +195,9 @@ const unsubscribe = bridge.onEvenHubEvent(event => {
       // Also clear any state a LONG_PRESS_RELEASE would have cleared —
       // that release may never arrive.
     } else if (type === 9) {
-      // Long press started (SDK 0.0.14+)
+      // Tap then long press started (SDK 0.0.14+)
     } else if (type === 10) {
-      // Long press released (SDK 0.0.14+)
+      // Tap then long press released (SDK 0.0.14+)
     }
     return
   }
@@ -250,7 +250,7 @@ Handle all four lifecycle events for a clean app:
 - **Cleanup**: `bridge.onEvenHubEvent()` returns an unsubscribe function. Always call it on component teardown.
 - **One event listener per page**: Only the container with `isEventCapture: 1` receives input events. If multiple containers have `isEventCapture: 1`, the SDK rejects the page with a validation error.
 - **Menu clicks are the exception to `isEventCapture`**: `menuItemClickEvent` arrives regardless of which container is capturing. Handle it before the container branches.
-- **Long press comes in two events, and the release can go missing**: never leave state that only `LONG_PRESS_RELEASE_EVENT` (10) can clear.
+- **Tap then long press comes in two events, and the release can go missing**: never leave state that only `LONG_PRESS_RELEASE_EVENT` (10) can clear.
 
 ## Task
 

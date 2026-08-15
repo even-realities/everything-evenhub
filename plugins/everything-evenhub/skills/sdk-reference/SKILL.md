@@ -27,7 +27,7 @@ npm install @evenrealities/even_hub_sdk
 
 Current version: **0.0.14**
 
-The contextual menu and the long-press event pair need SDK `0.0.14` **and** Even App `2.2.9`. Everything else runs on `2.2.6`.
+The contextual menu and the tap-then-long-press event pair need SDK `0.0.14` **and** Even App `2.2.9`. Everything else runs on `2.2.6`.
 
 ---
 
@@ -285,7 +285,7 @@ function formatEvenHubPageContainerValidationError(result): string
 
 ### Contextual Menu (0.0.14+)
 
-Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on a long press.
+Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on tap then long press.
 
 ```typescript
 class MenuContainerProperty {

@@ -95,7 +95,7 @@ Click the simulator display to export an RGBA PNG to the current working directo
 | Error handling | May differ in edge cases | Hardware behavior |
 | Text brightness (SDK 0.0.14+) | NOT varied — every `textColor` level renders the same | 5 distinct brightness levels |
 | Contextual menu (SDK 0.0.14+) | NOT rendered — `menuObject` accepted and ignored | OS renders your action items |
-| Long press (SDK 0.0.14+) | NOT producible — no long-press input action | `LONG_PRESS_EVENT` / `LONG_PRESS_RELEASE_EVENT` fire |
+| Tap then long press (SDK 0.0.14+) | NOT producible — no tap-then-long-press input action | `LONG_PRESS_EVENT` / `LONG_PRESS_RELEASE_EVENT` fire |
 
 ## Development Implications
 
@@ -106,7 +106,7 @@ Click the simulator display to export an RGBA PNG to the current working directo
 - **IMU features** — cannot test in simulator; `imuData` is always `null`
 - **Multi-input sources** — simulator only emits right-arm touch (`eventSource` = 1)
 - **Text brightness** — the simulator does not vary `textColor`; check contrast and hierarchy on hardware.
-- **Contextual menu & long press** — the simulator predates SDK 0.0.14 and supports neither. A green simulator run proves nothing about your menu or your long-press handling; validate both on real hardware before shipping.
+- **Contextual menu & tap then long press** — the simulator predates SDK 0.0.14 and supports neither. A green simulator run proves nothing about your menu or your tap-then-long-press handling; validate both on real hardware before shipping.
 
 ## Typical Workflow
 
