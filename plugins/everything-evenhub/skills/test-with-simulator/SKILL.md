@@ -108,7 +108,7 @@ Click the simulator display to export an RGBA PNG to the current working directo
 - **IMU features** — cannot test in simulator; `imuData` is always `null`
 - **Multi-input sources** — simulator only emits right-arm touch (`eventSource` = 1)
 - **Text brightness** - 0.9.0+ renders the five `textColor` levels, so hierarchy is checkable here; absolute legibility still needs hardware.
-- **Contextual menu** - 0.9.0+ draws it, navigates it, and fires `menuItemClickEvent` with your `itemID`. What it can't tell you is which system slots the OS shows alongside your items.
+- **Contextual menu** - 0.9.0+ draws it, navigates it, and fires `menuItemClickEvent` with your `itemID`. It honours the rebuild contract too: carry `menuObject` forward and the menu returns identical, omit it and your items are cleared. What it can't tell you is which system slots the OS shows alongside your items.
 - **Tap then long press** - 0.9.0+ simulates it in the window (holdable control, keyboard shortcut) but the automation API cannot deliver `LONG_PRESS_EVENT` / `LONG_PRESS_RELEASE_EVENT`. Scripted runs skip it; cover it manually or on hardware.
 
 ## Typical Workflow
