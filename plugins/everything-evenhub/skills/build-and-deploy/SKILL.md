@@ -64,7 +64,7 @@ Every field is required unless noted. Validate each field before running `evenhu
 | `edition` | string | yes | Must be exactly `"202601"`. |
 | `name` | string | yes | Maximum 20 characters. |
 | `version` | string | yes | Semver format `x.y.z` — three numeric parts separated by dots (e.g. `"1.0.0"`). No `v` prefix, no pre-release suffixes. |
-| `min_app_version` | string | yes | Minimum Even Hub app version required. E.g. `"2.0.0"`. |
+| `min_app_version` | string | no | Derived from your SDK version at pack time and stamped into the packed manifest (CLI 0.1.14+). Declare it only to pin a floor stricter than the SDK's. |
 | `min_sdk_version` | string | yes | Minimum SDK version required. Match the SDK version you build against (currently `"0.0.14"`). |
 | `entrypoint` | string | yes | Path to the entry HTML/JS file, relative to the build output folder. The file must exist inside the build output after `npm run build`. |
 | `permissions` | array | yes | Array of permission objects (see Permissions Reference). Can be empty `[]`. Must NOT be a key-value map. |
@@ -78,7 +78,6 @@ Every field is required unless noted. Validate each field before running `evenhu
   "edition": "202601",
   "name": "Weather Now",
   "version": "1.0.0",
-  "min_app_version": "2.0.0",
   "min_sdk_version": "0.0.14",
   "entrypoint": "index.html",
   "permissions": [],
@@ -190,6 +189,17 @@ npx evenhub pack <app.json> <build-folder> [options]
 | `-o <file>` / `--output <file>` | Output filename. Defaults to `out.ehpk` if not specified. |
 | `--no-ignore` | Include dotfiles and other normally-ignored files in the package. |
 | `-c` / `--check` | Check whether the `package_id` is available on the Even Hub store before packing. |
+| `--sdk-ver <version>` | SDK version you built against. The CLI reads that release's `minAppVersion` from npm and stamps it as the package's `min_app_version` floor (CLI 0.1.14+). |
+| `--enforce-manual-version` | Stamp `min_app_version` from `app.json` as written, even below the SDK floor. Local testing only; the result is not submittable (CLI 0.1.14+). |
+
+`min_app_version` is derived, not authored. At pack time the CLI resolves the SDK's
+`minAppVersion` from npm and stamps it in; a stricter value in `app.json` is kept, a
+looser one is raised. Pass `--sdk-ver` matching your installed SDK - omitted, the CLI
+reads whatever npm tags `latest`, which may be newer than what you bundled. SDK 0.0.14
+carries a floor of `2.2.9`.
+
+A failed pack exits non-zero since CLI 0.1.14, so a packaging step in CI fails the run
+rather than passing on a missing `.ehpk`.
 
 ---
 
@@ -200,7 +210,8 @@ npx evenhub pack <app.json> <build-folder> [options]
 | `Invalid package id` | Use lowercase reverse-domain format with a minimum of 2 dot-separated segments. No hyphens, no uppercase letters, no underscores, no segments starting with a digit. Example: `com.example.myapp`. |
 | `name: must be 20 characters or fewer` | Shorten the `name` value in `app.json` to 20 characters or fewer. |
 | `version: must be in x.y.z format` | Use a three-part numeric semver string such as `"1.0.0"`. Do not use `"1.0"`, `"v1.0.0"`, or pre-release tags. |
-| `min_app_version: expected string, received undefined` | `min_app_version` is required. Add it to `app.json` (e.g. `"2.0.0"`). |
+| `SDK version not published on npm: @evenrealities/even_hub_sdk@<version>` | `--sdk-ver` names a version npm does not have. Correct it - no `.ehpk` is written. |
+| `--enforce-manual-version needs a min_app_version in app.json` | Add `min_app_version`, or drop the flag and let the CLI derive the floor. |
 | `min_sdk_version: expected string, received undefined` | `min_sdk_version` is required. Add it to `app.json` (e.g. `"0.0.14"`). |
 | `permissions: each permission must be an object with name and desc keys` | `permissions` must be an array of objects, each with `name` and `desc`. See the Permissions Reference above. |
 | `supported_languages: invalid language` | Use only the supported lowercase ISO codes: `en`, `de`, `fr`, `es`, `it`, `zh`, `ja`, `ko`. |

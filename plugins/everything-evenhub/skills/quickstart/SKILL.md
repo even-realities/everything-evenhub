@@ -122,7 +122,6 @@ If `npx evenhub init` does not produce the file automatically, create `app.json`
   "edition": "202601",
   "name": "<Human-readable app name>",
   "version": "0.1.0",
-  "min_app_version": "2.0.0",
   "min_sdk_version": "0.0.14",
   "entrypoint": "index.html",
   "permissions": [],
@@ -135,7 +134,7 @@ Field explanations:
 - `edition` — Even Hub platform edition the app targets; use `"202601"` for current G2 firmware.
 - `name` — Human-readable display name shown in the Even Hub app store / launcher.
 - `version` — Semantic version of your app (`MAJOR.MINOR.PATCH`).
-- `min_app_version` — Minimum Even Hub companion app version required to run this app.
+- `min_app_version` - omit it. The CLI derives the floor from your SDK version and stamps it at pack time (CLI 0.1.14+); declare it only to pin something stricter.
 - `min_sdk_version` — Minimum Even Hub SDK version required. Match the SDK version you build against (currently `"0.0.14"`).
 - `entrypoint` — HTML file Vite serves as the app root; leave as `"index.html"`.
 - `permissions` — Array of permission objects (`{ "name": "...", "desc": "..." }`). Use `[]` for apps that need no special permissions. Valid names: `network`, `location`, `g2-microphone`, `phone-microphone`, `album`, `camera`.
