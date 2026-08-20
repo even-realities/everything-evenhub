@@ -295,8 +295,7 @@ class MenuContainerProperty {
 class MenuItemProperty {
   itemName?: string    // label; max 32 UTF-8 BYTES (not characters)
   itemID?: number      // non-zero uint32, unique across the menu; comes back on click
-  position?: number    // 0 = payload order; 1..N = absolute slot among your items
-}
+}                      // no ordering field: items render in payload order
 
 class MenuItemClickEvent {
   itemID?: number      // the itemID you assigned
@@ -312,7 +311,7 @@ Menu structure:
 | Your action items | Your app — up to 10 |
 | **Close [app name]** (bottom) | System — always present, not reachable from the SDK. Renders the app's name, e.g. `Close Timer` |
 
-The system set can grow between firmware releases and none of it is visible to the SDK. Never count screen rows — `position` indexes your own items only.
+The system set can grow between firmware releases and none of it is visible to the SDK. Never count screen rows - you hand over a list, you do not address a slot. Items render in payload order; reorder the array to reorder the menu.
 
 ```typescript
 await bridge.createStartUpPageContainer({
@@ -320,8 +319,8 @@ await bridge.createStartUpPageContainer({
   textObject: [/* ... */],
   menuObject: {
     menuItems: [
-      { itemName: 'Restart', itemID: 1, position: 0 },
-      { itemName: 'Recenter', itemID: 2, position: 0 },
+      { itemName: 'Restart', itemID: 1 },
+      { itemName: 'Recenter', itemID: 2 },
     ],
   },
 })
@@ -352,7 +351,6 @@ enum EvenHubPageContainerValidationErrorCode {
   InvalidMenuItemID = 'INVALID_MENU_ITEM_ID',      // itemID is 0, negative, or outside uint32
   DuplicateMenuItemID = 'DUPLICATE_MENU_ITEM_ID',  // same itemID twice
   InvalidMenuItemName = 'INVALID_MENU_ITEM_NAME',  // itemName over 32 UTF-8 bytes
-  InvalidMenuPosition = 'INVALID_MENU_POSITION',   // position outside 0..menuItems.length
   InvalidTextBrightness = 'INVALID_TEXT_BRIGHTNESS' // textColor outside 0..4
 }
 

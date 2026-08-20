@@ -216,7 +216,7 @@ shutDownPageContainer(exitMode?: number): Promise<boolean>
 
 Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on tap then long press. Below 2.2.9 the declaration is a silent no-op.
 
-The OS owns the frame. Your items sit between permanent system slots — **Display off** (top), **Brightness**, and **Close [app name]** (bottom, renders the app's name) — none of them reachable from the SDK. Declare nothing and the user still gets those. The system set can grow between firmware releases, so never count screen rows; `position` indexes your own items only.
+The OS owns the frame. Your items sit between permanent system slots — **Display off** (top), **Brightness**, and **Close [app name]** (bottom, renders the app's name) — none of them reachable from the SDK. Declare nothing and the user still gets those. The system set can grow between firmware releases, so never count screen rows - you cannot address a slot, only hand over a list.
 
 ```typescript
 await bridge.createStartUpPageContainer({
@@ -229,8 +229,8 @@ await bridge.createStartUpPageContainer({
   }],
   menuObject: {
     menuItems: [
-      { itemName: 'Restart', itemID: 1, position: 0 },
-      { itemName: 'Recenter', itemID: 2, position: 0 },
+      { itemName: 'Restart', itemID: 1 },
+      { itemName: 'Recenter', itemID: 2 },
     ],
   },
 })
@@ -240,7 +240,8 @@ await bridge.createStartUpPageContainer({
 |---|---|---|
 | `itemName` | string | Label the OS renders. Max **32 UTF-8 bytes** — ASCII gets 32, CJK caps near 10 |
 | `itemID` | number | Non-zero uint32, unique across the menu. Comes back on the click event |
-| `position` | number | `0` keeps payload order; `1..N` requests an absolute slot among your items |
+
+Items render in **payload order**. SDK `0.0.14` has no ordering field - `MenuItemProperty` carries `itemName` and `itemID` and nothing else, and its `toJson()` drops anything else you attach, so a stray ordering property is a silent no-op. To reorder, reorder the array.
 
 Rules:
 
