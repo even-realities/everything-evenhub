@@ -13,7 +13,9 @@ argument-hint: [testing task description]
 npm install -g @evenrealities/evenhub-simulator
 ```
 
-Version: v0.7.1. Cross-platform: macOS, Linux, Windows.
+Version: v0.9.0. Cross-platform: macOS, Linux, Windows.
+
+0.9.0 tracks SDK 0.0.14: it renders the five `textColor` brightness levels, draws the contextual menu, and simulates tap then long press. Anything below 0.9.0 does none of the three - check with `evenhub-simulator --version` before trusting a green run on those features.
 
 ## Basic Usage
 
@@ -93,6 +95,9 @@ Click the simulator display to export an RGBA PNG to the current working directo
 | List scrolling | May differ from hardware | Native firmware scroll |
 | Image memory | No limits enforced | Hardware memory limits apply |
 | Error handling | May differ in edge cases | Hardware behavior |
+| Text brightness (SDK 0.0.14+) | 5 levels since 0.9.0, not photometrically matched | 5 distinct brightness levels |
+| Contextual menu (SDK 0.0.14+) | Drawn and navigable since 0.9.0; system slots may differ | OS renders your action items alongside its own |
+| Tap then long press (SDK 0.0.14+) | In the window only since 0.9.0, not over the automation API | `LONG_PRESS_EVENT` / `LONG_PRESS_RELEASE_EVENT` fire |
 
 ## Development Implications
 
@@ -102,6 +107,9 @@ Click the simulator display to export an RGBA PNG to the current working directo
 - **Device status flows** — test on hardware only; `onDeviceStatusChanged` never fires in simulator
 - **IMU features** — cannot test in simulator; `imuData` is always `null`
 - **Multi-input sources** — simulator only emits right-arm touch (`eventSource` = 1)
+- **Text brightness** - 0.9.0+ renders the five `textColor` levels, so hierarchy is checkable here; absolute legibility still needs hardware.
+- **Contextual menu** - 0.9.0+ draws it, navigates it, and fires `menuItemClickEvent` with your `itemID`. It honours the rebuild contract too: carry `menuObject` forward and the menu returns identical, omit it and your items are cleared. What it can't tell you is which system slots the OS shows alongside your items.
+- **Tap then long press** - 0.9.0+ simulates it in the window (holdable control, keyboard shortcut) but the automation API cannot deliver `LONG_PRESS_EVENT` / `LONG_PRESS_RELEASE_EVENT`. Scripted runs skip it; cover it manually or on hardware.
 
 ## Typical Workflow
 

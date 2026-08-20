@@ -105,8 +105,8 @@ During development, use these skills to implement features:
 | Tier 1 — One-Click | `quickstart` | Scaffold a blank G2 app from scratch (Vite + TS + SDK) |
 | Tier 1 — One-Click | `template` | Scaffold from a curated starter (`minimal`, `asr`, `image`, `text-heavy`) via degit |
 | Tier 1 — One-Click | `build-and-deploy` | Package and publish app to Even Hub |
-| Tier 2 — Core Development | `glasses-ui` | Build glasses display UI with containers, text, images, and lists |
-| Tier 2 — Core Development | `handle-input` | Handle touchpad gestures, ring input, and lifecycle events |
+| Tier 2 — Core Development | `glasses-ui` | Build glasses display UI with containers, text, images, lists, and the contextual menu |
+| Tier 2 — Core Development | `handle-input` | Handle touchpad gestures, ring input, tap then long press, contextual-menu selections, and lifecycle events |
 | Tier 2 — Core Development | `device-features` | Use audio capture, IMU, device info, and local storage |
 | Tier 2 — Core Development | `test-with-simulator` | Run and debug your app in the Even Hub Simulator |
 | Tier 2 — Core Development | `simulator-automation` | Automate the simulator via its HTTP API — screenshots, input, console logs |

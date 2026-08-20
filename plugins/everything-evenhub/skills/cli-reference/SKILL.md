@@ -101,6 +101,21 @@ evenhub pack app.json ./build --check
 | `-o, --output <file>` | Output filename (default: `out.ehpk`) |
 | `--no-ignore` | Include hidden files (dotfiles) |
 | `-c, --check` | Check if `package_id` is available on Even Hub |
+| `--sdk-ver <version>` | SDK version you built against. The CLI reads its `minAppVersion` from npm and stamps it as the `.ehpk` floor. Omit and it resolves whatever npm tags `latest` (CLI 0.1.14+) |
+| `--enforce-manual-version` | Stamp `min_app_version` from `app.json` as written, even below the SDK floor. Local testing only; not submittable (CLI 0.1.14+) |
+
+### `min_app_version` is derived, not authored (CLI 0.1.14+)
+
+At pack time the CLI looks up the SDK's `minAppVersion` on npm and stamps it into the packed manifest. If `app.json` declares a higher floor, the stricter value wins; a lower one is raised. The source `app.json` is left untouched.
+
+```bash
+evenhub pack app.json dist --sdk-ver 0.0.14
+# min_app_version 2.2.9  (SDK 0.0.14, --sdk-ver)
+```
+
+SDK 0.0.14 publishes a floor of `2.2.9` - its contextual menu and tap-then-long-press events need bridge APIs only Even App 2.2.9 implements. Pass `--sdk-ver` matching your installed SDK; without it the floor comes from whatever npm tags `latest`, which may be newer than the SDK you bundled. If npm is unreachable the CLI warns and falls back to a bundled map.
+
+A failed pack exits non-zero since 0.1.14, so a CI packaging step fails the run instead of passing on a missing `.ehpk`.
 
 ---
 
@@ -124,8 +139,8 @@ evenhub --completion-fish
 | `edition` | string | Yes | Must be `"202601"` |
 | `name` | string | Yes | Max 20 characters |
 | `version` | string | Yes | Semver `x.y.z` |
-| `min_app_version` | string | Yes | Min Even Realities App version (e.g., `"2.0.0"`) |
-| `min_sdk_version` | string | Yes | Min SDK version (e.g., `"0.0.12"`) |
+| `min_app_version` | string | No | Derived from your SDK at pack time (CLI 0.1.14+). Declare it only to pin a stricter floor |
+| `min_sdk_version` | string | Yes | Min SDK version (e.g., `"0.0.14"`) |
 | `entrypoint` | string | Yes | Path to HTML entry relative to build folder |
 | `permissions` | array | Yes | Array of permission objects. Can be `[]` |
 | `supported_languages` | array | Yes | Valid: `en`, `de`, `fr`, `es`, `it`, `zh`, `ja`, `ko` |
@@ -138,8 +153,7 @@ evenhub --completion-fish
   "edition": "202601",
   "name": "My App",
   "version": "0.1.0",
-  "min_app_version": "2.0.0",
-  "min_sdk_version": "0.0.12",
+  "min_sdk_version": "0.0.14",
   "entrypoint": "index.html",
   "permissions": [],
   "supported_languages": ["en"]
@@ -182,7 +196,9 @@ Permissions is an array of objects. Each object requires:
 | `Invalid package id` | Lowercase reverse-domain, min 2 segments, no hyphens, no uppercase, no leading numbers |
 | `name: must be 20 characters or fewer` | Shorten app name |
 | `version: must be in x.y.z format` | Use three-part semver |
-| `min_app_version/min_sdk_version: expected string, received undefined` | Both fields are required — add them to `app.json` |
+| `min_sdk_version: expected string, received undefined` | `min_sdk_version` is required - add it, matching your installed SDK. `min_app_version` is not: the CLI derives it (0.1.14+) |
+| `SDK version not published on npm: @evenrealities/even_hub_sdk@<version>` | `--sdk-ver` points at a version npm does not have. No `.ehpk` is written |
+| `--enforce-manual-version needs a min_app_version in app.json` | Add one, or drop the flag and let the CLI derive the floor |
 | `permissions: each permission must be an object` | Use array of objects with `name` + `desc` fields |
 | `supported_languages: invalid language` | Use lowercase ISO codes from the supported set |
 | `Entrypoint file not found` | Ensure the file exists in the build folder |

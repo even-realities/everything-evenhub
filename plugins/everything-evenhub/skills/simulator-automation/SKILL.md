@@ -122,15 +122,55 @@ Send a touchpad action to the glasses display.
 POST /api/input
 Content-Type: application/json
 
-{ "action": "up" | "down" | "click" | "double_click" }
+{ "action": "up" | "down" | "click" | "double_click" | "context_menu" }
 ```
 
 Response: `{ "ok": true }`
 
 Actions map to the glasses touchpad:
-- `up` / `down` — scroll through list items or text
-- `click` — select the current item
-- `double_click` — triggers a system-level double-click event (typically "back" or "dismiss")
+- `up` / `down` - scroll through list items or text
+- `click` - select the current item
+- `double_click` - triggers a system-level double-click event (typically "back" or "dismiss")
+- `context_menu` - toggles the contextual menu open or closed (simulator 0.9.0+)
+
+The set is closed. Any other value is a `400` that names the accepted list:
+
+```
+invalid action 'long_press', expected: up, down, click, double_click, context_menu
+```
+
+**Driving the contextual menu.** `context_menu` toggles: it opens a closed menu and
+closes an open one. `up` / `down` move focus inside it, and `click` selects - the app
+receives `menuItemClickEvent` carrying the declared `itemID`, and the menu closes.
+
+```python
+requests.post(f"{BASE_URL}/api/input", json={"action": "context_menu"})
+time.sleep(0.5)
+requests.post(f"{BASE_URL}/api/input", json={"action": "down"})
+requests.post(f"{BASE_URL}/api/input", json={"action": "click"})
+# menuItemClickEvent for the second item lands in the app
+```
+
+Assert on the framebuffer, not on timing: opening the menu is a large lit-pixel jump,
+moving focus within it is a small one.
+
+Two traps a script hits silently:
+
+- **`context_menu` toggles.** A blind second send closes the menu instead of reopening
+  it. Track the state, or assert the framebuffer between sends.
+- **A rebuild does not dismiss an open menu.** `rebuildPageContainer` underneath an
+  open overlay leaves it on screen, so a screenshot taken after a rebuild can still be
+  showing a menu whose declaration is already gone.
+
+The simulator honours the menu rebuild contract: a rebuild carrying `menuObject`
+reproduces the menu, a rebuild omitting it clears your items and leaves the system's.
+Verified on 0.9.0 - carried forward renders identically, omitted comes back at 1036 vs
+1535 lit pixels.
+
+**No long-press action.** `context_menu` delivers the menu, not the gesture.
+`LONG_PRESS_EVENT` / `LONG_PRESS_RELEASE_EVENT` cannot be produced from this API at
+all. An app that handles the raw press itself needs the simulator window (holdable
+control or its keyboard shortcut) or real hardware - a scripted run cannot cover it.
 
 ## Automation workflow
 
@@ -145,6 +185,7 @@ Actions map to the glasses touchpad:
 - The glasses display is 576×288 pixels, monochrome green. Screenshots are RGBA PNGs.
 - Input only works when the app has created an active event container. If no container is active, input is silently ignored.
 - `double_click` is typically used to go back or dismiss the current view.
+- Brightness reads out of the alpha channel: RGB stays `0,255,0` for every lit pixel, and the five `textColor` levels come back as five distinct alpha values (simulator 0.9.0+).
 - Allow 4+ seconds after launching the simulator before polling — SDK init and `createStartUpPageContainer` take time.
 
 ## Task
