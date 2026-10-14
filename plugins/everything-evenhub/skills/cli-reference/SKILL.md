@@ -130,7 +130,7 @@ evenhub pack app.json dist --check
 
 | Argument / Option | Description |
 |---|---|
-| `<json>` | Path to `app.json` |
+| `<manifest>` | Path to `app.json` |
 | `<project>` | Built output folder (`dist`, `build`, …) |
 | `-o, --output <file>` | Output filename (default `out.ehpk`) |
 | `--no-ignore` | Include dotfiles |
@@ -353,11 +353,12 @@ One code per failure type. Branch on these, not on message text.
 | 6 | Icon rejected by the server |
 | 7 | App is published or under review; listing edits go through review |
 | 8 | Limit reached or rate limited |
-| 9 | Local validation failed, nothing was sent |
+| 9 | A local step failed, server state unchanged |
 | 10 | Network or server error |
+| 11 | A server-side change landed, then a local step after it failed |
 | 130 | Interrupted |
 
-**Exit 9 means the request was never made** — the input is wrong and retrying it unchanged fails identically. **Exit 10** is the opposite: an in-flight write may have landed, so check state before retrying.
+**Exit 9 means server state is unchanged**, so the command can be run again as it stands; when the cause is bad input it fails identically until the input changes. **Exit 11 means a write landed**: `partial` lists the effects that completed, and the hint names the local step to repair, such as a `state.yaml` that cannot be written. Repair that step rather than replaying the command. **Exit 10** sits between the two: an in-flight write may have landed, so check state before retrying.
 
 Every authenticated endpoint shares **60 requests per minute per user**. Crossing it exits 8 and the CLI does not retry on its own; wait a minute.
 

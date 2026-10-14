@@ -66,7 +66,7 @@ Every version after that:
 npx evenhub upload <name>.ehpk -m "<what changed>"
 ```
 
-**Exit 0** continues. **Exit 2** means nobody is signed in — stop and tell the user to run `evenhub login` in a terminal themselves; it prompts for a password and cannot be scripted. **Exit 4** on `create` means the app already exists, so use `upload`; on `upload` it means that version number is taken, so raise `version` in `app.json` and go back to Step 2. **Exit 9** is a rejected field or icon, with the offending value in the message.
+**Exit 0** continues. **Exit 2** means nobody is signed in — stop and tell the user to run `evenhub login` in a terminal themselves; it prompts for a password and cannot be scripted. **Exit 4** on `create` means the app already exists, so use `upload`; on `upload` it means that version number is taken, so raise `version` in `app.json` and go back to Step 2. **Exit 9** is a rejected field or icon, with the offending value in the message. **Exit 11** means the app or build was created and a local step after it failed; `partial` names what exists, so repair the local step instead of running the command again.
 
 **5b. Invite the testers.**
 
@@ -299,8 +299,9 @@ Branch on these rather than on message text.
 | 6 | Server rejected the icon | Rebuild the icon to the 24x24 `#F4F4F4` 2x2-block rules |
 | 7 | Listing edit needs review | Portal only |
 | 8 | Limit reached or rate limited | 60 requests a minute; invitations cap at ten per address |
-| 9 | Local validation failed | Nothing was sent. Fix the input from the message, never retry unchanged |
+| 9 | Local step failed, server state unchanged | Nothing changed on the server. Fix the input from the message, never retry unchanged |
 | 10 | Network or server error | A write may have landed — check state before retrying |
+| 11 | A write landed, then a local step failed | `partial` lists what landed. Repair the local step named in the hint rather than replaying the command |
 
 Add `--json` to any command to get one JSON object on stdout with these same codes in an `exit` field, plus `message` and `hint`.
 
