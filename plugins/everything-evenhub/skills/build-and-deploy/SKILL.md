@@ -74,7 +74,7 @@ npx evenhub upload <name>.ehpk -m "<what changed>"
 npx evenhub testers add <email>[,<email>...]
 ```
 
-Addresses already `Invited` or `Active` are skipped and reported, so re-running a roster is safe. Only `--reinvite` re-sends, and it voids the link in the tester's earlier email — do not pass it unless the user asked for a re-send.
+Addresses already `Invited` or `Active` are skipped and reported, so re-running a roster is safe. Only `--reinvite` re-sends, and only to `Invited` addresses, voiding the link in the tester's earlier email - do not pass it unless the user asked for a re-send. An `Active` member stays skipped even then, since an accepted membership has no invitation link to replace.
 
 **Exit 8** means an address hit its ten-invitation cap. **Exit 9** means one address in the batch was malformed and none were sent.
 

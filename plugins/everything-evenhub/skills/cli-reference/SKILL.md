@@ -305,7 +305,7 @@ evenhub testers rm a@example.com
 |---|---|
 | `--search <keyword>` | Filter the listing by email |
 | `--from <file>` | Read addresses from a file |
-| `--reinvite` | Re-send to addresses already Invited or Active |
+| `--reinvite` | Re-send to addresses already Invited |
 
 `--json` keys — list: `package_id`, `testers`, `total`. `add`: `invited`, `skipped`, `reinvited`. `rm`: `removed`.
 
@@ -317,9 +317,9 @@ Addresses already `Invited` or `Active` are **skipped by default** and reported:
 {"invited":[],"skipped":[{"email":"a@example.com","reason":"Invited"}],"reinvited":[],"ok":true}
 ```
 
-The server resets any address handed back to it to Pending and issues a new token, voiding the link in the email the tester already has. The default skip is what stops a re-run from breaking everyone's invitation.
+The server resets an `Invited` address handed back to it to Pending and issues a new token, voiding the link in the email the tester already has. The default skip is what stops a re-run from breaking everyone's invitation.
 
-`--reinvite` deliberately re-sends and **voids the earlier link**. Use it when a tester lost the mail or the seven days expired, never to "refresh" a list.
+`--reinvite` deliberately re-sends to an `Invited` address and **voids the earlier link**. Use it when a tester lost the mail or the seven days expired, never to "refresh" a list. An `Active` member is held back even under `--reinvite` and stays in `skipped`: an accepted membership has no invitation link to replace, and a fresh one would cost them the access they have.
 
 ### File format
 
@@ -527,7 +527,7 @@ evenhub ls <package_id>              # CHANNEL must read beta
 evenhub testers --package-id <pkg>   # the tester must read Active
 ```
 
-`test version expired` on the phone means one of them is missing. If a tester accepted and the build then vanished, someone ran `--reinvite`, which reset them to Pending.
+`test version expired` on the phone means one of them is missing. If a tester accepted and the build then vanished, the address went through the portal's **Add user** a second time, which reset them to Pending; `evenhub testers add` leaves an `Active` member alone, with or without `--reinvite`.
 
 ---
 
