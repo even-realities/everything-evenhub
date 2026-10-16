@@ -323,7 +323,7 @@ The server resets any address handed back to it to Pending and issues a new toke
 
 ### File format
 
-One address per line, or a single-column CSV whose `email` header row is skipped — the same file the portal's Import CSV takes. Addresses are lower-cased and de-duplicated. The whole batch is validated first: one malformed address rejects the file with **exit 9** and leaves the roster untouched.
+One address per line, or a single-column CSV whose `email` header row is skipped — the same file the portal's Import CSV takes. Addresses go to the server with the case they were written in; repeats of one spelling are dropped, and two spellings of one address are both sent and named in the output. The whole batch is validated first: one malformed address rejects the file with **exit 9** and leaves the roster untouched.
 
 ### States and limits
 
@@ -400,7 +400,7 @@ These run before any request. A failure exits **9** with nothing sent, and the m
 | Counting | Unicode **code points**, not bytes and not UTF-16 length |
 | Normalisation | `\r\n` → `\n`, then trim, then measure |
 | `.ehpk` | Extension must be `.ehpk`, at most 100 MB |
-| Email | Valid format, at most 200 characters, de-duplicated and lower-cased per batch |
+| Email | Valid format, at most 200 characters, sent with the case written, repeats of one spelling dropped per batch |
 | `package_id` | Reverse domain, at least two segments |
 | `promote --to public` | Refused locally |
 
