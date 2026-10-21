@@ -68,16 +68,6 @@ Invalidates the refresh token server-side and deletes `credentials.yaml`. The lo
 
 Access tokens refresh automatically. When the refresh token expires too, every command exits **2**.
 
-| Variable | Effect |
-|---|---|
-| `EVENHUB_BASE_URL` | API base, default `https://hub.evenrealities.com` |
-| `EVENHUB_API_URL` | API root directly |
-| `EVENHUB_API_DEBUG` | Log each API request and status to stderr |
-| `EVENHUB_NPM_REGISTRY` | Registry for the SDK `minAppVersion` lookup |
-| `XDG_CONFIG_HOME` | Where credentials, QR and draft state live |
-
-Credentials and drafts are keyed by base URL, so switching environments does not mix them.
-
 **CI:** there is no non-interactive login. Log in once on a workstation, store `credentials.yaml` as a secret file, write it to `$XDG_CONFIG_HOME/evenhub/credentials.yaml` in the job. Give each job its own `XDG_CONFIG_HOME`.
 
 ---
