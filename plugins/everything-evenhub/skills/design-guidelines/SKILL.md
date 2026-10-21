@@ -46,6 +46,26 @@ argument-hint: [design question or task]
 | Page flipping | Pre-paginate text at ~400-500 char boundaries, rebuild on scroll events |
 | "Centering" text | Manually pad with spaces (no text alignment support) |
 
+## Text Brightness (SDK 0.0.14+)
+
+Text containers take `textColor` — five **brightness** levels `0`–`4`, not colours. The display is monochrome green; this controls how bright the glyphs burn.
+
+- **Use it for hierarchy, not decoration.** A level-4 heading over a level-2 caption reads instantly. Alternating levels for their own sake just looks noisy.
+- **Two levels apart minimum.** Adjacent levels barely differ on hardware.
+- **Level 4 is the default** — you get it by omitting the field. Only reach for `textColor` when something should recede.
+- **Level 0 is the dimmest level, not "off"**, and may be effectively invisible. Don't ship a design that depends on it without checking hardware.
+- **Don't confuse it with `borderColor`** (0–15 greyscale). Different scales, same container.
+
+## Contextual Menu Labels (SDK 0.0.14+)
+
+Items your app adds to the glasses contextual menu render one per line, unwrapped, between the system slots (Display off, Brightness, Close).
+
+- **32 UTF-8 bytes per label, not 32 characters.** ASCII gets 32; CJK is 3 bytes per glyph, so a Chinese label caps near 10. Over the limit fails SDK validation.
+- **Verbs, not state readouts.** Selection is fire-and-forget and the glasses never re-render a label, so `Status: high` goes stale the moment the handler runs. `Restart`, `Skip`, `Mute` never do.
+- **Under ~16 ASCII characters** reads cleanly at a glance.
+- **10 items is the ceiling, not the target.** Past five or six, the user scrolls further than they would have tapped.
+- **Don't mirror the page.** The menu is for what the current screen can't reach.
+
 ## Icon Design Principles
 
 - **Design at native resolution** — work at actual pixel size (e.g., 24x24). Avoid designing large and scaling down.
@@ -70,6 +90,7 @@ Full supported glyph tables: https://github.com/nickustinov/even-g2-notes
 - **4-bit greyscale**
 - Placeholder on creation — must call `updateImageRawData` to display content
 - **No concurrent image sends** — wait for each to complete
+- **Paced at 100ms (SDK 0.0.14+)** — each send holds the image path for 100ms; faster calls are held and flushed on the next window rather than dropped. A floor, not a frame budget — a frame still costs far longer over BLE
 - Use simple/flat colors; glasses have limited memory
 
 ## Phone-Side App UI (Flutter WebView host)
@@ -118,6 +139,7 @@ https://www.figma.com/design/X82y5uJvqMH95jgOfmV34j/Even-Realities---Software-De
 
 - **even-g2-notes** (GitHub: https://github.com/nickustinov/even-g2-notes) — architecture deep-dives, full Unicode glyph tables, SDK quirks, error codes, reference implementations: chess, reddit reader, weather, Tesla vehicle status, pong, snake
 - **even-toolkit** (GitHub: https://github.com/fabioglimb/even-toolkit, npm: `even-toolkit`) — 55+ React components, 191 pixel-art icons, design tokens, glasses SDK bridge utilities (useGlasses hook, buildActionBar, mapGlassEvent, canvas renderer, PNG utils, pagination helpers)
+- **ER Studio** (GitHub: https://github.com/gabrielevierti/er-studio/releases) — community IDE wrapping the official toolchain: Monaco editor with TypeScript IntelliSense, template scaffolding, one-click run (Vite + simulator) and pack (`.ehpk`), live simulator framebuffer mirror, gesture input pad, console, and an environment DOCTOR panel. macOS Apple Silicon builds; Intel builds from source
 - **Discord**: https://discord.gg/Y4jHMCU4sv — developer community for support, bug reports, discussion
 
 ## Task
