@@ -74,6 +74,7 @@ Text containers display scrollable or static text content.
 | `borderRadius` | number | 0–10 | Rounded corners |
 | `paddingLength` | number | 0–32 | Uniform padding |
 | `content` | string | — | Text to display |
+| `textColor` | number | 0–4 | Text **brightness**, not colour (SDK 0.0.14+). Omit on create/rebuild = device default 4 |
 
 **Content limits:**
 - `createStartUpPageContainer`: max **1000 characters**
@@ -163,10 +164,11 @@ rebuildPageContainer(container: RebuildPageContainer): Promise<boolean>
 - Returns `true` on success
 - Causes a **brief flicker on hardware** (full redraw)
 - Text content limit: 1000 characters per text container
+- **Omitting `menuObject` clears the contextual menu** (SDK 0.0.14+) — see below
 
 ### `textContainerUpgrade(container)`
 
-Updates text content in-place without rebuilding the page. Flicker-free.
+Updates text content in-place without rebuilding the page. Flicker-free. Accepts an optional `textColor` (brightness 0–4, SDK 0.0.14+); omitting it keeps the container's current brightness.
 
 ```typescript
 textContainerUpgrade(container: TextContainerUpgrade): Promise<boolean>
@@ -210,12 +212,79 @@ shutDownPageContainer(exitMode?: number): Promise<boolean>
 - `exitMode: 0` — immediate exit with no confirmation
 - `exitMode: 1` — show exit confirmation dialog
 
+## Contextual Menu (SDK 0.0.14+)
+
+Requires SDK `0.0.14` and Even App `2.2.9`. Attach `menuObject` to `createStartUpPageContainer` or `rebuildPageContainer` to add action items to the glasses contextual menu — the overlay the OS raises on tap then long press. Below 2.2.9 the declaration is a silent no-op.
+
+The OS owns the frame. Your items sit between permanent system slots — **Display off** (top), **Brightness**, and **Close [app name]** (bottom, renders the app's name) — none of them reachable from the SDK. Declare nothing and the user still gets those. The system set can grow between firmware releases, so never count screen rows - you cannot address a slot, only hand over a list.
+
+```typescript
+await bridge.createStartUpPageContainer({
+  containerTotalNum: 1,
+  textObject: [{
+    xPosition: 0, yPosition: 0, width: 576, height: 288,
+    containerID: 1, containerName: 'main',
+    content: 'Timer running',
+    isEventCapture: 1,
+  }],
+  menuObject: {
+    menuItems: [
+      { itemName: 'Restart', itemID: 1 },
+      { itemName: 'Recenter', itemID: 2 },
+    ],
+  },
+})
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `itemName` | string | Label the OS renders. Max **32 UTF-8 bytes** — ASCII gets 32, CJK caps near 10 |
+| `itemID` | number | Non-zero uint32, unique across the menu. Comes back on the click event |
+
+Items render in **payload order**. SDK `0.0.14` has no ordering field - `MenuItemProperty` carries `itemName` and `itemID` and nothing else, and its `toJson()` drops anything else you attach, so a stray ordering property is a silent no-op. To reorder, reorder the array.
+
+Rules:
+
+- **Max 10 items.** Exceeding it fails SDK-side validation (`TOO_MANY_MENU_ITEMS`) and the page never reaches the glasses.
+- **`itemID` cannot be `0`** — zero is reserved by the protocol. Start at `1`.
+- **Fire-and-forget only.** One event per selection, then the menu closes. The glasses never re-render item labels, so an item reading `Status: high` still reads `Status: high` after your handler changes the value. Re-declare the menu to change a label, and write labels as verbs (`Restart`, `Skip`, `Mute`) so it rarely matters.
+- **Replaced wholesale on rebuild, never merged.** A `rebuildPageContainer` that drops `menuObject` because the layout changed also drops the menu — re-send it on every rebuild that should keep it.
+- **Keep labels short and don't duplicate the page.** The OS renders one line per slot with no wrapping; the menu is for what the current screen can't reach.
+- **Don't add your own exit item.** Close is a system slot, and the root-page double-tap contract is unchanged.
+
+Selections arrive as `event.menuItemClickEvent` — see the `handle-input` skill.
+
+## Text Brightness (SDK 0.0.14+)
+
+Text containers take an optional `textColor` — **five brightness levels, `0` to `4`**. Despite the field name there is no colour: the display is monochrome green, and `textColor` sets how bright the glyphs burn. Text containers only.
+
+| Context | Omitting it means |
+|---|---|
+| `createStartUpPageContainer` / `rebuildPageContainer` | Device default, level **4** (brightest) |
+| `textContainerUpgrade` | Keep the container's **current** brightness |
+
+```typescript
+// Heading at full brightness, secondary line dimmed
+textObject: [
+  { containerID: 1, containerName: 'title',   content: 'Now Playing', textColor: 4, isEventCapture: 1,
+    xPosition: 0, yPosition: 0, width: 576, height: 64 },
+  { containerID: 2, containerName: 'caption', content: 'Updated 3 min ago', textColor: 2, isEventCapture: 0,
+    xPosition: 0, yPosition: 72, width: 576, height: 48 },
+]
+```
+
+- **`textColor` is 0–4; `borderColor` is 0–15.** Different scales on the same container — don't reuse a greyscale index as a brightness level.
+- **Level `0` is the dimmest level, not "unset".** `textColor: 0` may render effectively invisible; verify on hardware before relying on it.
+- Out-of-range values fail SDK-side validation (`INVALID_TEXT_BRIGHTNESS`) and never reach the glasses.
+- Use brightness for **hierarchy** — a dim caption under a bright heading — not for decoration. Two levels apart reads clearly; adjacent levels barely differ.
+
 ## Best Practices
 
 - **Use `textContainerUpgrade` for frequent updates** (counters, status lines, live data feeds) — it updates in-place with no flicker
 - **Use `rebuildPageContainer` when changing layout** — adding or removing containers, switching container types, or updating list items
 - **Always match `containerID` and `containerName` exactly** when calling `textContainerUpgrade` — mismatches silently fail
 - **Do not call `updateImageRawData` concurrently** — queue updates and await each before sending the next
+- **Image sends are paced at 100ms (0.0.14+)** — each send holds the image path for 100ms; calls inside that window are held and flushed on the next one, so nothing is dropped and nothing arrives early. It is a floor, not a frame budget — a frame still costs far longer over BLE. Await the `ImageRawDataUpdateResult`, but read it as a call result, not a delivery receipt from the glasses
 - **Pre-paginate long text** at ~400–500 character boundaries and use `rebuildPageContainer` on scroll events
 - **Image frames cost ~0.5s to ~2s each over BLE** — SDK 0.0.12+ LZ4-compresses raw data internally, which shortens transfers, but there is no delta encoding; design turn-based and avoid loops that assume multi-FPS
 - **Text updates are much faster than image updates** — use text for anything that needs to feel instant; let image containers catch up on their own
