@@ -1,0 +1,32 @@
+{
+  "card": {
+    "containerTotalNum": 1,
+    "textObject": [
+      {
+        "containerID": 1,
+        "containerName": "summary",
+        "xPosition": 16,
+        "yPosition": 16,
+        "width": 320,
+        "height": 84,
+        "content": ""
+      }
+    ],
+    "imageObject": []
+  },
+  "expanded": {
+    "containerTotalNum": 1,
+    "textObject": [
+      {
+        "containerID": 1,
+        "containerName": "summary",
+        "xPosition": 24,
+        "yPosition": 16,
+        "width": 528,
+        "height": 196,
+        "content": ""
+      }
+    ],
+    "imageObject": []
+  }
+}

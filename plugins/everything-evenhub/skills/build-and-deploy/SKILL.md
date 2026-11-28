@@ -5,6 +5,8 @@ allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [task description]
 ---
 
+For apps with Widgets, follow [widgets](../widgets/SKILL.md) and include dist/widget/manifest.json, layout, any icon and fixture. Keep data.interval / interval.seconds and data.endpoint / data.request.url equal for upload compatibility, using GET data requests. Optional notify declares independent POST polling; validate with [notifications](../notifications/SKILL.md). A successful pack does not verify App parsing or notification delivery. Check an installed build without the dev server.
+
 You are packaging an Even Hub G2 app for distribution. Follow the steps below carefully, validating each stage before proceeding.
 
 ## Packaging Workflow

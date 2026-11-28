@@ -5,6 +5,8 @@ allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [project name or description]
 ---
 
+An Even Hub app contains a Plugin experience and an optional Widget experience in one .ehpk. This scaffold builds the Plugin experience. Add Dashboard content only when useful via [widgets](../widgets/SKILL.md); notifications are an optional capability of apps with Widgets.
+
 You are scaffolding a complete Even Hub G2 smart glasses project. Follow every step below in order. Do not skip any step. Use the project name derived from `$ARGUMENTS` (default to `my-evenhub-app` if none is given).
 
 ## What This Does

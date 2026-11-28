@@ -8,6 +8,8 @@ allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [automation task description]
 ---
 
+The Simulator HTTP API exercises only the Plugin experience. It does not preview Widgets or exercise notification polling; use [widgets](../widgets/SKILL.md) and [notifications](../notifications/SKILL.md) for those checks.
+
 # EvenHub Simulator Automation
 
 The simulator exposes an HTTP API on localhost when launched with `--automation-port <PORT>`.
