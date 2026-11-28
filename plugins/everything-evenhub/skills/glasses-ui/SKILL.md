@@ -5,6 +5,8 @@ allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [UI task description]
 ---
 
+This skill builds the SDK-driven Plugin experience. Declarative Dashboard Widgets use [widgets](../widgets/SKILL.md), with separate layout and image limits; do not apply Plugin container limits to Widgets.
+
 ## Canvas
 
 The G2 glasses display is a **576x288 px** canvas with the following characteristics:

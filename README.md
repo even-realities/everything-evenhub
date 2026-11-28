@@ -1,8 +1,10 @@
 # Everything EvenHub
 
-Everything EvenHub is an AI coding agent skill set for Even Realities G2 smart glasses app development. It provides 13 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, and SDK/CLI reference lookups.
+Everything EvenHub is an AI coding agent skill set for Even Realities G2 smart glasses app development. It provides 15 AI-assisted skills covering the full development lifecycle — from project scaffolding to UI composition, input handling, device features, simulation testing, font measurement, SDK/CLI reference lookups, Widgets and notifications.
 
 Works with [Claude Code](https://claude.ai/code) and [Codex CLI](https://developers.openai.com/codex/cli).
+
+An Even Hub app includes a Plugin experience and an optional Widget experience. The Simulator previews the Plugin experience only; Widgets use phone preview, and notifications require an installed build.
 
 ## Prerequisites
 
@@ -98,6 +100,11 @@ During development, use these skills to implement features:
 /simulator-automation "take a screenshot and verify text is displayed"
 ```
 
+```bash
+/widgets "add a delivery status Dashboard card"
+/notifications "notify when a parcel is ready for collection"
+```
+
 ## Skills
 
 | Tier | Skill | Description |
@@ -112,6 +119,8 @@ During development, use these skills to implement features:
 | Tier 2 — Core Development | `simulator-automation` | Automate the simulator via its HTTP API — screenshots, input, console logs |
 | Tier 2 — Core Development | `font-measurement` | Pixel-accurate text and list measurement matching LVGL firmware rendering |
 | Tier 2 — Core Development | `background-state` | Persist plugin state across background/foreground transitions with `setBackgroundState` / `onBackgroundRestore` |
+| Tier 2 — Core Development | `widgets` | Declarative Card / Expanded, data binding and Widget preview |
+| Tier 2 — Core Development | `notifications` | Independent POST polling, acknowledgment and device delivery checks |
 | Tier 3 — Reference | `sdk-reference` | Look up Even Hub SDK APIs and types |
 | Tier 3 — Reference | `cli-reference` | Look up Even Hub CLI commands |
 | Tier 3 — Reference | `design-guidelines` | G2 display design constraints and best practices |

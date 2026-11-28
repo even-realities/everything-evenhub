@@ -5,6 +5,8 @@ allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [CLI command or task]
 ---
 
+Widget files share the Plugin experience project URL and .ehpk. QR generates a URL, not a preview server: scan Widget preview for layouts/data, Prototype mode for the Plugin page. QR preview cannot deliver notifications. See [widgets](../widgets/SKILL.md) for manifest and pack checks, and [notifications](../notifications/SKILL.md) for installed-build tests.
+
 # Even Hub CLI Reference
 
 ## Installation

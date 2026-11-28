@@ -5,6 +5,8 @@ allowed-tools: [Read, Grep, Glob, Bash, Write, Edit]
 argument-hint: [testing task description]
 ---
 
+The Simulator previews only the Plugin experience. It does not preview Widgets or test notifications. Use [widgets](../widgets/SKILL.md) for phone Widget preview and [notifications](../notifications/SKILL.md) for installed-build notification tests.
+
 > The simulator is a supplement to — not a replacement for — hardware testing.
 
 ## Installation

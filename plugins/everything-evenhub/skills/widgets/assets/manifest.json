@@ -1,0 +1,29 @@
+{
+  "layout": "layout.json",
+  "config": {},
+  "interval": {
+    "seconds": 300
+  },
+  "data": {
+    "interval": 300,
+    "endpoint": "https://api.example.com/widget",
+    "request": {
+      "method": "GET",
+      "url": "https://api.example.com/widget"
+    },
+    "responseMap": {
+      "summary": "$.summary"
+    }
+  },
+  "defaultData": {
+    "config": {},
+    "response": {
+      "summary": "3 deliveries in transit"
+    }
+  },
+  "bindings": {
+    "summary": {
+      "from": "data.summary"
+    }
+  }
+}
